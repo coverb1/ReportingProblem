@@ -1,0 +1,141 @@
+@import "tailwindcss";
+
+:root {
+  --background: #060d16;
+  --card: #0c1a2a;
+  --card-hover: #102235;
+
+  --primary: #08aeea;
+  --primary-hover: #0798cc;
+
+  --text-primary: #f5f7fa;
+  --text-secondary: #a5b4c5;
+  --text-muted: #55708e;
+
+  --success: #16d9a0;
+  --warning: #ffb000;
+  --danger: #ff4b3e;
+
+  --border: #1b344b;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  background: var(--background);
+  color: var(--text-primary);
+  font-family: "Century Gothic", "AppleGothic", Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Headings */
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  color: var(--text-primary);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+/* Text */
+
+p {
+  color: var(--text-secondary);
+}
+
+/* Links */
+
+a {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--primary-hover);
+}
+
+/* Buttons */
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+/* Inputs */
+
+input,
+textarea,
+select {
+  background: #091522;
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 11px 14px;
+  font-family: inherit;
+  font-size: 14px;
+  outline: none;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-muted);
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(8, 174, 234, 0.12);
+}
+
+/* Scrollbar */
+
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1b344b;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #28516d;
+}
+
+/* Selection */
+
+::selection {
+  background: var(--primary);
+  color: #ffffff;
+}
+
+/* Disabled */
+
+button:disabled,
+input:disabled,
+textarea:disabled,
+select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
