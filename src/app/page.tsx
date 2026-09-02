@@ -1,4 +1,6 @@
 import Navbar from "../components/LandingPage/Navbar";
+import ProblemCategories from "../components/LandingPage/Problemcategories";
+import Process from "../components/LandingPage/Process";
 import Hero from "../components/LandingPage/Report";
 
 export default function Home() {
@@ -7,6 +9,8 @@ export default function Home() {
         <div>
             <Navbar />
             <Hero />
+            <Process/>
+            <ProblemCategories/>
         </div>
     )
 

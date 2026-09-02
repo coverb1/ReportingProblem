@@ -2,6 +2,13 @@
 
 import { ArrowRight, Zap } from "lucide-react";
 
+const STATS = [
+  { value: "12,847", label: "Total Reports Filed" },
+  { value: "89.4%", label: "Resolution Rate" },
+  { value: "26h", label: "Avg Response (HIGH)" },
+  { value: "24,500+", label: "Citizens Served" },
+];
+
 export default function Hero() {
   return (
     <section
@@ -12,9 +19,7 @@ export default function Hero() {
         paddingLeft: 24,
         paddingRight: 24,
         backgroundColor: "#060a12",
-        // 1) Put your image file in the /public folder, e.g. /public/hero-bg.jpg
-        // 2) Reference it here with a leading slash, matching the filename exactly
-        backgroundImage: "url('/hero-bg.jpg')",
+        backgroundImage: "url('/kigaliconversioncenter.jpg')",
         backgroundSize: "cover",
         backgroundPosition: "center",
       }}
@@ -79,6 +84,42 @@ export default function Hero() {
             </button>
           </div>
         </div>
+      </div>
+
+      {/* STATS BAR */}
+      <div
+        className="relative rounded-[16px] border border-[#1a2c3e]"
+        style={{
+          maxWidth: 1200,
+          marginLeft: "auto",
+          marginRight: "auto",
+          marginTop: 56,
+          backgroundColor: "#0a121e",
+          paddingTop: 28,
+          paddingBottom: 28,
+          paddingLeft: 40,
+          paddingRight: 40,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
+        {STATS.map((stat) => (
+          <div key={stat.label} style={{ textAlign: "center" }}>
+            <div
+              className="font-bold"
+              style={{ fontSize: 30, color: "#f5f7fa", lineHeight: 1.2 }}
+            >
+              {stat.value}
+            </div>
+            <div
+              className="text-[#8a97a8]"
+              style={{ fontSize: 13, marginTop: 6 }}
+            >
+              {stat.label}
+            </div>
+          </div>
+        ))}
       </div>
     </section>
   );
