@@ -21,7 +21,8 @@ export default function Footer() {
   return (
     <footer
       style={{
-        backgroundColor: "#060a12",
+        backgroundColor: "#03060c",
+        borderTop: "1px solid #141d2c",
         paddingTop: 56,
         paddingBottom: 32,
         paddingLeft: 24,
@@ -125,7 +126,7 @@ export default function Footer() {
               color: "#5c6b7d",
             }}
           >
-            © 2026 RCPMS · Government of Rwanda · Ministry of Local Government
+             2026 RCPMS · Government of Rwanda · Ministry of Local Government
           </span>
 
           <span

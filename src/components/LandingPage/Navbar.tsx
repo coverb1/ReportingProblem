@@ -102,7 +102,7 @@ export default function Navbar() {
 
               {/* MY REPORTS */}
               <Link
-                href="/reports"
+                href="/myReport"
                 style={{
                   height: 38,
                   padding: "0 14px",
