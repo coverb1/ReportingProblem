@@ -6,15 +6,17 @@ const STEPS = [
   {
     number: 1,
     icon: PenLine,
-    badgeColor: "#08aeea",
+    color: "#08aeea",
+    tint: "#e7f6fd",
     title: "Citizen Reports",
     description:
-      "Describe in your own words. Upload photo, share location. No technical knowledge needed.",
+      "Describe in your own words. Upload a photo, share location. No technical knowledge needed.",
   },
   {
     number: 2,
     icon: Bot,
-    badgeColor: "#8b5cf6",
+    color: "#8b5cf6",
+    tint: "#f1ecfe",
     title: "AI Analyzes",
     description:
       "Classifies category, sets priority, detects duplicates, assesses risk — in seconds.",
@@ -22,7 +24,8 @@ const STEPS = [
   {
     number: 3,
     icon: Landmark,
-    badgeColor: "#f59e0b",
+    color: "#f59e0b",
+    tint: "#fef3e2",
     title: "Auto-Routed",
     description:
       "AI identifies the responsible organization and routes the report immediately.",
@@ -30,7 +33,8 @@ const STEPS = [
   {
     number: 4,
     icon: UserCheck,
-    badgeColor: "#f97316",
+    color: "#f97316",
+    tint: "#fef0e5",
     title: "Team Acts",
     description:
       "Staff accepts and a technician is dispatched. Progress tracked in real-time.",
@@ -38,7 +42,8 @@ const STEPS = [
   {
     number: 5,
     icon: CheckCircle2,
-    badgeColor: "#22c55e",
+    color: "var(--primary)",
+    tint: "var(--background-green)",
     title: "Resolved",
     description:
       "Citizen confirms the fix. Report closed. Your community measurably improves.",
@@ -47,52 +52,34 @@ const STEPS = [
 
 export default function Process() {
   return (
-    <section
-      style={{
-        backgroundColor: "#060a12",
-        paddingTop: 80,
-        paddingBottom: 90,
-        paddingLeft: 24,
-        paddingRight: 24,
-      }}
-    >
-      <div style={{ maxWidth: 1200, marginLeft: "auto", marginRight: "auto" }}>
-
+    <section style={{ background: "var(--background-secondary)", paddingTop: 80, paddingBottom: 90 }}>
+      <div className="container">
         {/* LABEL */}
         <div style={{ textAlign: "center" }}>
           <span
-            className="font-semibold text-[#08aeea]"
-            style={{ fontSize: 12, letterSpacing: "3px" }}
+            className="text-primary"
+            style={{ fontSize: 12, fontWeight: 700, letterSpacing: "2px" }}
           >
             THE PROCESS
           </span>
         </div>
 
         {/* HEADING */}
-        <h2
-          className="font-serif font-bold text-[#f5f7fa]"
-          style={{
-            fontSize: 40,
-            textAlign: "center",
-            marginTop: 14,
-            marginBottom: 56,
-          }}
-        >
+        <h2 style={{ textAlign: "center", marginTop: 12, marginBottom: 56 }}>
           From report to resolution
         </h2>
 
         {/* STEPS ROW */}
         <div style={{ position: "relative", display: "flex", justifyContent: "space-between" }}>
-
-          {/* CONNECTING LINE (flat color, no gradient) */}
+          {/* CONNECTING DOTTED LINE */}
           <div
             style={{
               position: "absolute",
-              top: 44,
+              top: 36,
               left: 44,
               right: 44,
-              height: 1,
-              backgroundColor: "#1a2c3e",
+              height: 0,
+              borderTop: "2px dotted var(--border)",
               zIndex: 0,
             }}
           />
@@ -109,60 +96,57 @@ export default function Process() {
                   textAlign: "center",
                 }}
               >
-                {/* ICON BOX */}
+                {/* ICON CIRCLE */}
                 <div
                   style={{
-                    position: "relative",
-                    width: 88,
-                    height: 88,
+                    width: 72,
+                    height: 72,
                     marginLeft: "auto",
                     marginRight: "auto",
-                    borderRadius: 14,
-                    backgroundColor: "#0d1826",
-                    border: "1px solid #1a2c3e",
+                    borderRadius: "9999px",
+                    backgroundColor: step.tint,
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                   }}
                 >
-                  <Icon size={30} strokeWidth={1.8} color="#dce5ed" />
+                  <Icon size={28} strokeWidth={1.8} color={step.color} />
+                </div>
 
-                  {/* NUMBER BADGE */}
-                  <div
+                {/* NUMBER + TITLE */}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 8,
+                    marginTop: 18,
+                  }}
+                >
+                  <span
                     style={{
-                      position: "absolute",
-                      top: -10,
-                      right: -10,
-                      width: 26,
-                      height: 26,
+                      width: 20,
+                      height: 20,
+                      flexShrink: 0,
                       borderRadius: "9999px",
-                      backgroundColor: step.badgeColor,
-                      border: "3px solid #060a12",
+                      backgroundColor: step.color,
+                      color: "#ffffff",
+                      fontSize: 11,
+                      fontWeight: 700,
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      fontSize: 12,
-                      fontWeight: 700,
-                      color: "#060a12",
                     }}
                   >
                     {step.number}
-                  </div>
-                </div>
-
-                {/* TITLE */}
-                <div
-                  className="font-bold text-[#f5f7fa]"
-                  style={{ fontSize: 16, marginTop: 18 }}
-                >
-                  {step.title}
+                  </span>
+                  <span style={{ fontSize: 16, fontWeight: 700, color: "var(--text-primary)" }}>
+                    {step.title}
+                  </span>
                 </div>
 
                 {/* DESCRIPTION */}
-                <p
-                  className="text-[#7c8aa0]"
-                  style={{ fontSize: 13, lineHeight: 1.55, marginTop: 8 }}
-                >
+                <p style={{ fontSize: 13, lineHeight: 1.55, marginTop: 8 }}>
                   {step.description}
                 </p>
               </div>

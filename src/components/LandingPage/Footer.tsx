@@ -21,31 +21,34 @@ export default function Footer() {
   return (
     <footer
       style={{
-        backgroundColor: "#03060c",
-        borderTop: "1px solid #141d2c",
+        backgroundColor: "var(--primary-dark)",
         paddingTop: 56,
         paddingBottom: 32,
-        paddingLeft: 24,
-        paddingRight: 24,
       }}
     >
-      <div style={{ maxWidth: 1200, marginLeft: "auto", marginRight: "auto" }}>
-
+      <div className="container">
         {/* TOP ROW */}
-        <div style={{ display: "flex", justifyContent: "space-between" }}>
-
+        <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 40 }}>
           {/* LEFT: LOGO + DESCRIPTION */}
           <div style={{ maxWidth: 340 }}>
             <Link href="/" style={{ display: "flex", alignItems: "center" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
-                <span style={{ width: 8, height: 22, borderRadius: 2, backgroundColor: "#16a05d" }} />
-                <span style={{ width: 8, height: 22, borderRadius: 2, backgroundColor: "#ffcf00" }} />
-                <span style={{ width: 8, height: 22, borderRadius: 2, backgroundColor: "#08aeea" }} />
-              </div>
-              <span
-                className="font-serif font-bold"
-                style={{ marginLeft: 10, fontSize: 18, color: "#f5f7fa" }}
+              <div
+                style={{
+                  width: 34,
+                  height: 34,
+                  borderRadius: "var(--radius-sm)",
+                  background: "#ffffff",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "var(--primary)",
+                  fontSize: 15,
+                  fontWeight: 700,
+                }}
               >
+                R
+              </div>
+              <span style={{ marginLeft: 10, fontSize: 18, fontWeight: 700, color: "#ffffff" }}>
                 RCPMS
               </span>
             </Link>
@@ -54,8 +57,7 @@ export default function Footer() {
               style={{
                 marginTop: 6,
                 fontSize: 12,
-                fontFamily: "monospace",
-                color: "#5c6b7d",
+                color: "rgba(255, 255, 255, 0.6)",
               }}
             >
               Rwanda Community Problem Mgmt.
@@ -66,7 +68,7 @@ export default function Footer() {
                 marginTop: 18,
                 fontSize: 13.5,
                 lineHeight: 1.6,
-                color: "#7c8aa0",
+                color: "rgba(255, 255, 255, 0.75)",
               }}
             >
               AI-powered civic platform connecting Rwandan citizens to the
@@ -75,13 +77,10 @@ export default function Footer() {
           </div>
 
           {/* RIGHT: LINK COLUMNS */}
-          <div style={{ display: "flex", gap: 72 }}>
+          <div style={{ display: "flex", gap: 64, flexWrap: "wrap" }}>
             {COLUMNS.map((col) => (
               <div key={col.heading}>
-                <div
-                  className="font-bold"
-                  style={{ fontSize: 14, color: "#f5f7fa", marginBottom: 16 }}
-                >
+                <div style={{ fontSize: 14, fontWeight: 700, color: "#ffffff", marginBottom: 16 }}>
                   {col.heading}
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -89,8 +88,13 @@ export default function Footer() {
                     <Link
                       key={label}
                       href="#"
-                      style={{ fontSize: 13.5, color: "#7c8fd4" }}
-                      className="hover:text-[#a9b8ec] transition-colors"
+                      style={{
+                        fontSize: 13.5,
+                        color: "rgba(255, 255, 255, 0.75)",
+                        transition: "color 0.15s ease",
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.color = "#ffffff")}
+                      onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255, 255, 255, 0.75)")}
                     >
                       {label}
                     </Link>
@@ -106,7 +110,7 @@ export default function Footer() {
           style={{
             marginTop: 48,
             marginBottom: 24,
-            borderTop: "1px solid #1a2434",
+            borderTop: "1px solid rgba(255, 255, 255, 0.15)",
           }}
         />
 
@@ -119,23 +123,11 @@ export default function Footer() {
             gap: 12,
           }}
         >
-          <span
-            style={{
-              fontSize: 12,
-              fontFamily: "monospace",
-              color: "#5c6b7d",
-            }}
-          >
-             2026 RCPMS · Government of Rwanda · Ministry of Local Government
+          <span style={{ fontSize: 12, color: "rgba(255, 255, 255, 0.6)" }}>
+            © 2026 RCPMS · Government of Rwanda · Ministry of Local Government
           </span>
 
-          <span
-            style={{
-              fontSize: 12,
-              fontFamily: "monospace",
-              color: "#5c6b7d",
-            }}
-          >
+          <span style={{ fontSize: 12, color: "rgba(255, 255, 255, 0.6)" }}>
             Built with AI-assisted governance · Law No. 058/2021 Compliant
           </span>
         </div>
