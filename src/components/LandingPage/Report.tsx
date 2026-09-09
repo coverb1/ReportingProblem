@@ -24,12 +24,6 @@ export default function Hero() {
       >
         {/* LEFT CONTENT */}
         <div style={{ flex: "1 1 480px", maxWidth: 560 }}>
-          <span
-            className="badge-info"
-            style={{ marginBottom: 20, background: "var(--primary-light)", color: "var(--primary)" }}
-          >
-            Building better communities together
-          </span>
 
           <h1 style={{ marginTop: 20 }}>
             See a problem.
