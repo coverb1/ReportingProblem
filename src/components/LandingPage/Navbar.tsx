@@ -13,7 +13,7 @@ type NavLink = {
 const LINKS: NavLink[] = [
   { label: "Home", href: "/" },
   { label: "My Reports", href: "/myReport" },
-  { label: "Public Map", href: "/map" },
+  { label: "Public Map", href: "/locationmap" },
 ];
 
 const ROLE_OPTIONS = ["Citizen", "Organisation", "Staff", "Admin"];
