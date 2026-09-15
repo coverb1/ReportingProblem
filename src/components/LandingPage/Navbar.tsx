@@ -94,14 +94,10 @@ export default function Navbar() {
             justifyContent: "space-between",
           }}
         >
-          {/* ================= LEFT ================= */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-            }}
+          
+          <div style={{display: "flex",alignItems: "center",}}
           >
-            {/* ================= LOGO ================= */}
+            
             <Link
               href="/"
               style={{
@@ -158,7 +154,7 @@ export default function Navbar() {
               </div>
             </Link>
 
-            {/* ================= NAV LINKS ================= */}
+           
             <div
               style={{
                 marginLeft: 40,
@@ -209,7 +205,7 @@ export default function Navbar() {
             </div>
           </div>
 
-          {/* ================= RIGHT ================= */}
+          
           <div
             style={{
               display: "flex",
@@ -217,7 +213,7 @@ export default function Navbar() {
               gap: 12,
             }}
           >
-            {/* ================= ROLE DROPDOWN ================= */}
+          
             <div
               ref={dropdownRef}
               style={{
@@ -363,7 +359,7 @@ export default function Navbar() {
               )}
             </div>
 
-            {/* ================= REPORT BUTTON ================= */}
+       
             <Link
               href="/reports/new"
               className="btn-primary"
@@ -376,9 +372,7 @@ export default function Navbar() {
               + Report
             </Link>
 
-            {/* ================================================= */}
-            {/*                  ACCOUNT DROPDOWN                  */}
-            {/* ================================================= */}
+           
             <div
               ref={profileRef}
               style={{
@@ -387,7 +381,7 @@ export default function Navbar() {
               onMouseEnter={() => setProfileOpen(true)}
               onMouseLeave={() => setProfileOpen(false)}
             >
-              {/* ================= USER ICON ================= */}
+              
               <button
                 type="button"
                 aria-label="Account menu"
@@ -437,9 +431,9 @@ export default function Navbar() {
                     zIndex: 100,
                   }}
                 >
-                  {/* ================= SIGN IN ================= */}
+               
                   <Link
-                    href="/signin"
+                    href="/auth/login"
                     role="menuitem"
                     onClick={() => setProfileOpen(false)}
                     style={{
@@ -480,8 +474,6 @@ export default function Navbar() {
 
                     <span>Sign In</span>
                   </Link>
-
-                  {/* ================= DIVIDER ================= */}
                   <div
                     style={{
                       height: 1,
@@ -489,10 +481,8 @@ export default function Navbar() {
                       margin: "4px 8px",
                     }}
                   />
-
-                  {/* ================= SIGN UP ================= */}
                   <Link
-                    href="/signup"
+                    href="/auth/register"
                     role="menuitem"
                     onClick={() => setProfileOpen(false)}
                     style={{
@@ -502,13 +492,7 @@ export default function Navbar() {
                       display: "flex",
                       alignItems: "center",
                       gap: 13,
-                      borderRadius: 12,
-                      color: "var(--text-primary)",
-                      fontSize: 14,
-                      fontWeight: 500,
-                      textDecoration: "none",
-                      transition:
-                        "background-color 0.15s, color 0.15s",
+                      borderRadius: 12,color: "var(--text-primary)",fontSize: 14,fontWeight: 500,textDecoration: "none",transition:"background-color 0.15s, color 0.15s",
                     }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.background =
