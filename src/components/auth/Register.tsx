@@ -1,143 +1,246 @@
 "use client";
 
-import { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import {UserRound,Mail,Lock,Eye,EyeOff,MapPin,ChevronDown,ArrowRight,} from "lucide-react";
+import { UserRound, Mail, Lock, Eye, EyeOff, MapPin, ChevronDown, ArrowRight, } from "lucide-react";
+import axios from "axios";
 
 export default function SignUpPage() {
+
+
+  type LocationItem = {
+    id: string
+    name: string
+  }
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [district, setDistrict] = useState<LocationItem[]>([])
+  const [sectors, setSectors] = useState<LocationItem[]>([])
+  const [village, setVillage] = useState<LocationItem[]>([])
+  const [cells, setCells] = useState<LocationItem[]>([])
 
-  const [formData, setFormData] = useState({
-    fullName: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-    district: "",
-    sector: "",
-    cell: "",
-    village: "",
-  });
 
-  const [error, setError] = useState("");
+  const [districtId, setDistrictId] = useState("")
+  const [sectorsId, setSectorsId] = useState("")
+  const [villageId, setVillageId] = useState("")
+  const [cellId, setCellId] = useState("");
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = e.target;
 
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+  // useEffect(()=>{
+  //   const getDistrict=async()=>{
+  //     const response=await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/location/districts`)
+  //     console.log(response.data)
+  //     setDistrictId(response.data)
+  //   }
+  //   getDistrict()
+  // })
 
-    setError("");
-  };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  useEffect(() => {
+    const getDistrict = async () => {
+      try {
+        const responce = await axios.get("http://localhost:3000/location/districts")
+        console.log(responce.data)
+        setDistrict(responce.data)
+      } catch (error) {
+        console.log("District", error)
+      }
+    }
+    getDistrict()
+  }, [])
 
-    if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match.");
-      return;
+  const handleDistrictChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const districtId = e.target.value //Get the value of the district that the user selected  //is being sent to backend
+    setDistrictId(districtId) 
+    setSectorsId("")
+
+    setCellId("")
+    setVillageId("")
+
+    setCells([])
+    setVillage([])
+
+
+
+    if (!districtId) {
+      setSectors([]);
+      return
     }
 
-    console.log("Registration data:", formData);
 
-    // Connect your backend registration API here.
-  };
+    const response = await axios.get(`http://localhost:3000/location/districts/${districtId}/sectors`)
+    setSectors(response.data)
+    console.log(response.data)
+  }
+
+
+  const handleSectorsChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const id = e.target.value
+
+    setSectorsId(id)
+    setVillageId("")
+    setCellId("")
+    setVillage([])
+
+    if (!id) {
+      setCells([])
+      return
+    }
+
+    const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/location/sectors/${id}/cells`)
+    setSectors(response.data)
+  }
+
+
+  const handleCellChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const sectorId = e.target.value
+
+    setCellId(sectorId)
+
+    setVillageId("")
+
+    if (!sectorId) {
+      setVillage([])
+      return
+    }
+    const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/location/cells/${sectorId}/villages`)
+    setVillage(response.data)
+  }
 
   return (
-    <main className="signup-page">
-      <div className="signup-container">
-       
+    <main className="!min-h-screen !bg-[var(--background-secondary)] !px-4 !py-8 setsm:!px-6 sm:!py-12">
+      <div className="!mx-auto !w-full !max-w-[900px]">
+
         {/* Card */}
-        <div className="signup-card">
-          {/* Header */}
-          <div className="signup-header">
-            <div className="signup-icon">
-              <UserRound size={25} strokeWidth={1.8} />
+        <div className="!w-full !overflow-hidden !rounded-[var(--radius-lg)] !border !border-[var(--border-light)] !bg-[var(--background)] !shadow-sm">
+
+          {/* Card Content */}
+          <div className="!p-6 sm:!p-10">
+
+            {/* Header */}
+            <div className="!mb-8">
+
+              <h1 className="!m-0 !text-3xl !font-bold !leading-tight !text-[var(--text-primary)] sm:!text-[36px]">
+                Create your account
+              </h1>
+
+              <p className="!m-0 !mt-2 !text-sm !font-normal !leading-6 !text-[var(--text-secondary)] sm:!text-[15px]">
+                Join RCPMS and help make your community better.
+              </p>
+
             </div>
 
-            <h1>Create your account</h1>
+            {/* Fields */}
+            <div className="!grid !grid-cols-1 !gap-8 md:!grid-cols-2">
 
-            <p>
-              Join RCPMS and help make your community better.
-            </p>
-          </div>
+              {/* Personal Information */}
+              <div>
 
-          {error && <div className="signup-error">{error}</div>}
-
-          <form onSubmit={handleSubmit}>
-            <div className="signup-columns">
-              {/* LEFT COLUMN */}
-              <div className="signup-column">
-                <h2 className="column-title">Personal Information</h2>
+                <h2 className="!mb-5 !mt-0 !text-base !font-bold !text-[var(--text-primary)]">
+                  Personal Information
+                </h2>
 
                 {/* Full Name */}
-                <div className="form-group">
-                  <label htmlFor="fullName">Full Name</label>
+                <div className="!mb-5">
 
-                  <div className="input-wrapper">
-                    <UserRound size={18} />
+                  <label
+                    htmlFor="fullName"
+                    className="!mb-1.5 !block !text-sm !font-medium !text-[var(--text-primary)]"
+                  >
+                    Full Name
+                  </label>
+
+                  <div className="!relative">
+
+                    <UserRound
+                      size={18}
+                      strokeWidth={1.8}
+                      className="pointer-events-none !absolute !left-3.5 !top-1/2 !z-10 !-translate-y-1/2 !text-[var(--text-muted)]"
+                    />
 
                     <input
                       id="fullName"
                       name="fullName"
                       type="text"
                       placeholder="Enter your full name"
-                      value={formData.fullName}
-                      onChange={handleChange}
-                      required
+                      autoComplete="name"
+                      className="!m-0 !block !h-12 !w-full !rounded-[var(--radius-md)] !border !border-[var(--border)] !bg-[var(--background)] !px-4 !py-3 !pl-11 !text-sm !font-normal !text-[var(--text-primary)] !outline-none !transition-all !placeholder:text-[var(--text-muted)] focus:!border-[var(--primary)] focus:!ring-2 focus:!ring-[var(--primary-light)]"
                     />
+
                   </div>
+
                 </div>
 
                 {/* Email */}
-                <div className="form-group">
-                  <label htmlFor="email">Email</label>
+                <div className="!mb-5">
 
-                  <div className="input-wrapper">
-                    <Mail size={18} />
+                  <label
+                    htmlFor="email"
+                    className="!mb-1.5 !block !text-sm !font-medium !text-[var(--text-primary)]"
+                  >
+                    Email
+                  </label>
+
+                  <div className="!relative">
+
+                    <Mail
+                      size={18}
+                      strokeWidth={1.8}
+                      className="pointer-events-none !absolute !left-3.5 !top-1/2 !z-10 !-translate-y-1/2 !text-[var(--text-muted)]"
+                    />
 
                     <input
                       id="email"
                       name="email"
                       type="email"
                       placeholder="Enter your email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      required
+                      autoComplete="email"
+                      className="!m-0 !block !h-12 !w-full !rounded-[var(--radius-md)] !border !border-[var(--border)] !bg-[var(--background)] !px-4 !py-3 !pl-11 !text-sm !font-normal !text-[var(--text-primary)] !outline-none !transition-all !placeholder:text-[var(--text-muted)] focus:!border-[var(--primary)] focus:!ring-2 focus:!ring-[var(--primary-light)]"
                     />
+
                   </div>
+
                 </div>
 
                 {/* Password */}
-                <div className="form-group">
-                  <label htmlFor="password">Password</label>
+                <div className="!mb-5">
 
-                  <div className="input-wrapper">
-                    <Lock size={18} />
+                  <label
+                    htmlFor="password"
+                    className="!mb-1.5 !block !text-sm !font-medium !text-[var(--text-primary)]"
+                  >
+                    Password
+                  </label>
+
+                  <div className="!relative">
+
+                    <Lock
+                      size={18}
+                      strokeWidth={1.8}
+                      className="pointer-events-none !absolute !left-3.5 !top-1/2 !z-10 !-translate-y-1/2 !text-[var(--text-muted)]"
+                    />
 
                     <input
                       id="password"
                       name="password"
                       type={showPassword ? "text" : "password"}
                       placeholder="Create a password"
-                      value={formData.password}
-                      onChange={handleChange}
-                      required
+                      autoComplete="new-password"
+                      className="!m-0 !block !h-12 !w-full !rounded-[var(--radius-md)] !border !border-[var(--border)] !bg-[var(--background)] !px-4 !py-3 !pl-11 !pr-12 !text-sm !font-normal !text-[var(--text-primary)] !outline-none !transition-all !placeholder:text-[var(--text-muted)] focus:!border-[var(--primary)] focus:!ring-2 focus:!ring-[var(--primary-light)]"
                     />
 
                     <button
                       type="button"
-                      className="eye-button"
-                      onClick={() => setShowPassword(!showPassword)}
+                      onClick={() =>
+                        setShowPassword((prev) => !prev)
+                      }
                       aria-label={
                         showPassword
                           ? "Hide password"
                           : "Show password"
                       }
+                      className="!absolute !right-0 !top-0 !m-0 !flex !h-12 !w-12 !items-center !justify-center !border-0 !bg-transparent !p-0 !text-[var(--text-muted)] !shadow-none hover:!text-[var(--text-primary)]"
                     >
                       {showPassword ? (
                         <EyeOff size={18} />
@@ -145,36 +248,47 @@ export default function SignUpPage() {
                         <Eye size={18} />
                       )}
                     </button>
+
                   </div>
+
                 </div>
 
                 {/* Confirm Password */}
-                <div className="form-group">
-                  <label htmlFor="confirmPassword">
+                <div>
+
+                  <label
+                    htmlFor="confirmPassword"
+                    className="!mb-1.5 !block !text-sm !font-medium !text-[var(--text-primary)]"
+                  >
                     Confirm Password
                   </label>
 
-                  <div className="input-wrapper">
-                    <Lock size={18} />
+                  <div className="!relative">
+
+                    <Lock
+                      size={18}
+                      strokeWidth={1.8}
+                      className="pointer-events-none !absolute !left-3.5 !top-1/2 !z-10 !-translate-y-1/2 !text-[var(--text-muted)]"
+                    />
 
                     <input
                       id="confirmPassword"
                       name="confirmPassword"
                       type={
-                        showConfirmPassword ? "text" : "password"
+                        showConfirmPassword
+                          ? "text"
+                          : "password"
                       }
                       placeholder="Confirm your password"
-                      value={formData.confirmPassword}
-                      onChange={handleChange}
-                      required
+                      autoComplete="new-password"
+                      className="!m-0 !block !h-12 !w-full !rounded-[var(--radius-md)] !border !border-[var(--border)] !bg-[var(--background)] !px-4 !py-3 !pl-11 !pr-12 !text-sm !font-normal !text-[var(--text-primary)] !outline-none !transition-all !placeholder:text-[var(--text-muted)] focus:!border-[var(--primary)] focus:!ring-2 focus:!ring-[var(--primary-light)]"
                     />
 
                     <button
                       type="button"
-                      className="eye-button"
                       onClick={() =>
                         setShowConfirmPassword(
-                          !showConfirmPassword
+                          (prev) => !prev
                         )
                       }
                       aria-label={
@@ -182,6 +296,7 @@ export default function SignUpPage() {
                           ? "Hide password"
                           : "Show password"
                       }
+                      className="!absolute !right-0 !top-0 !m-0 !flex !h-12 !w-12 !items-center !justify-center !border-0 !bg-transparent !p-0 !text-[var(--text-muted)] !shadow-none hover:!text-[var(--text-primary)]"
                     >
                       {showConfirmPassword ? (
                         <EyeOff size={18} />
@@ -189,159 +304,163 @@ export default function SignUpPage() {
                         <Eye size={18} />
                       )}
                     </button>
+
                   </div>
+
                 </div>
+
               </div>
 
-              {/* RIGHT COLUMN */}
-              <div className="signup-column">
-                <h2 className="column-title">
+              {/* Location Information */}
+              <div>
+
+                <h2 className="!mb-5 !mt-0 !text-base !font-bold !text-[var(--text-primary)]">
                   Location Information
                 </h2>
 
                 {/* District */}
-                <div className="form-group">
-                  <label htmlFor="district">District</label>
-
-                  <div className="select-wrapper">
-                    <MapPin size={18} className="select-icon" />
-
-                    <select
-                      id="district"
-                      name="district"
-                      value={formData.district}
-                      onChange={handleChange}
-                      required
-                    >
-                      <option value="">Select District</option>
-                      <option value="Gasabo">Gasabo</option>
-                      <option value="Kicukiro">Kicukiro</option>
-                      <option value="Nyarugenge">
-                        Nyarugenge
-                      </option>
+                {/* <div className="!mb-5">
+                  <label htmlFor="district" className="!mb-1.5 !block !text-sm !font-medium !text-[var(--text-primary)]"> District</label>
+                  <div className="!relative">
+                    <MapPin size={18}strokeWidth={1.8}className="pointer-events-none !absolute !left-3.5 !top-1/2 !z-10 !-translate-y-1/2 !text-[var(--text-muted)]"/>
+                    <select  value={districtId} onChange={handleDistrictChange}
+                     id="district"name="district"defaultValue=""className="!m-0 !block !h-12 !w-full !appearance-none 
+                    !rounded-[var(--radius-md)] !border !border-[var(--border)] !bg-[var(--background)] !px-10 !py-3 !text-sm !font-normal !text-[var(--text-primary)] !outline-none !transition-all focus:!border-[var(--primary)] focus:!ring-2 focus:!ring-[var(--primary-light)]">
                     </select>
-
-                    <span className="select-arrow">
-                      <ChevronDown
-                        size={17}
-                        strokeWidth={1.8}
-                      />
-                    </span>
+                    <ChevronDown size={17}strokeWidth={1.8}className="pointer-events-none !absolute !right-3.5 !top-1/2 !-translate-y-1/2 !text-[var(--text-muted)]"/>
                   </div>
-                </div>
+                </div> */}
+
+
+                <select
+                  id="district"
+                  name="district"
+                  value={districtId}
+                  onChange={handleDistrictChange}
+                  className="!m-0 !block !h-12 !w-full !appearance-none !rounded-[var(--radius-md)] !border !border-[var(--border)] !bg-[var(--background)] !px-10 !py-3 !text-sm !font-normal !text-[var(--text-primary)] !outline-none !transition-all focus:!border-[var(--primary)] focus:!ring-2 focus:!ring-[var(--primary-light)]"
+                >
+                  {district.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.name}
+                    </option>
+                  ))}
+                </select>
+
 
                 {/* Sector */}
-                <div className="form-group">
-                  <label htmlFor="sector">Sector</label>
+                <div className="!mb-5">
 
-                  <div className="select-wrapper">
-                    <MapPin size={18} className="select-icon" />
+                  <label htmlFor="sector" className="!mb-1.5 !block !text-sm !font-medium !text-[var(--text-primary)]">
+                    Sector
+                  </label>
+
+                  <div className="!relative">
+                    <MapPin size={18} strokeWidth={1.8} className="pointer-events-none !absolute !left-3.5 !top-1/2 !z-10 !-translate-y-1/2 !text-[var(--text-muted)]" />
 
                     <select
                       id="sector"
-                      name="sector"
-                      value={formData.sector}
-                      onChange={handleChange}
-                      required
-                    >
+                      name="sector" value={sectorsId} onChange={handleSectorsChange} disabled={!districtId} className="!m-0 !block !h-12 !w-full !appearance-none !rounded-[var(--radius-md)] !border !border-[var(--border)] !bg-[var(--background)] !px-10 !py-3 !text-sm !font-normal !text-[var(--text-primary)] !outline-none !transition-all disabled:!cursor-not-allowed disabled:!opacity-50 focus:!border-[var(--primary)] focus:!ring-2 focus:!ring-[var(--primary-light)]">
                       <option value="">Select Sector</option>
-                      <option value="Remera">Remera</option>
-                      <option value="Kimironko">
-                        Kimironko
-                      </option>
-                      <option value="Kacyiru">Kacyiru</option>
-                      <option value="Gisozi">Gisozi</option>
+
+                      {sectors.map((item) => (
+                        <option key={item.id} value={item.id}>
+                          {item.name}
+                        </option>
+                      ))}
                     </select>
 
-                    <span className="select-arrow">
-                      <ChevronDown
-                        size={17}
-                        strokeWidth={1.8}
-                      />
-                    </span>
+                    <ChevronDown
+                      size={17}
+                      strokeWidth={1.8}
+                      className="pointer-events-none !absolute !right-3.5 !top-1/2 !-translate-y-1/2 !text-[var(--text-muted)]"
+                    />
                   </div>
                 </div>
+
 
                 {/* Cell */}
-                <div className="form-group">
-                  <label htmlFor="cell">Cell</label>
-
-                  <div className="select-wrapper">
-                    <MapPin size={18} className="select-icon" />
-
-                    <select
-                      id="cell"
-                      name="cell"
-                      value={formData.cell}
-                      onChange={handleChange}
-                      required
-                    >
-                      <option value="">Select Cell</option>
-                      <option value="Rukiri">Rukiri</option>
-                      <option value="Nyabisindu">
-                        Nyabisindu
-                      </option>
-                      <option value="Kibagabaga">
-                        Kibagabaga
-                      </option>
-                    </select>
-
-                    <span className="select-arrow">
-                      <ChevronDown
-                        size={17}
-                        strokeWidth={1.8}
-                      />
-                    </span>
-                  </div>
-                </div>
+                
 
                 {/* Village */}
-                <div className="form-group">
-                  <label htmlFor="village">Village</label>
+                <div>
 
-                  <div className="select-wrapper">
-                    <MapPin size={18} className="select-icon" />
+                  <label
+                    htmlFor="village"
+                    className="!mb-1.5 !block !text-sm !font-medium !text-[var(--text-primary)]"
+                  >
+                    Village
+                  </label>
+
+                  <div className="!relative">
+
+                    <MapPin
+                      size={18}
+                      strokeWidth={1.8}
+                      className="pointer-events-none !absolute !left-3.5 !top-1/2 !z-10 !-translate-y-1/2 !text-[var(--text-muted)]"
+                    />
 
                     <select
                       id="village"
                       name="village"
-                      value={formData.village}
-                      onChange={handleChange}
-                      required
+                      defaultValue=""
+                      className="!m-0 !block !h-12 !w-full !appearance-none !rounded-[var(--radius-md)] !border !border-[var(--border)] !bg-[var(--background)] !px-10 !py-3 !text-sm !font-normal !text-[var(--text-primary)] !outline-none !transition-all focus:!border-[var(--primary)] focus:!ring-2 focus:!ring-[var(--primary-light)]"
                     >
-                      <option value="">Select Village</option>
+                      <option value="" disabled>
+                        Select Village
+                      </option>
                       <option value="Amahoro">Amahoro</option>
                       <option value="Umucyo">Umucyo</option>
                       <option value="Isano">Isano</option>
                     </select>
 
-                    <span className="select-arrow">
-                      <ChevronDown
-                        size={17}
-                        strokeWidth={1.8}
-                      />
-                    </span>
+                    <ChevronDown
+                      size={17}
+                      strokeWidth={1.8}
+                      className="pointer-events-none !absolute !right-3.5 !top-1/2 !-translate-y-1/2 !text-[var(--text-muted)]"
+                    />
+
                   </div>
+
                 </div>
+
               </div>
+
             </div>
 
-            {/* Submit */}
+            {/* Create Account */}
             <button
-              type="submit"
-              className="create-account-button"
+              type="button"
+              className="!mt-8 !flex !h-12 !w-full !items-center !justify-center !rounded-[var(--radius-md)] !border-0 !bg-[var(--primary)] !px-5 !py-3 !text-sm !font-semibold !text-white !shadow-none !transition-colors hover:!bg-[var(--primary-dark)] focus:!outline-none focus:!ring-2 focus:!ring-[var(--primary-light)] focus:!ring-offset-2"
             >
               Create Account
-              <ArrowRight size={18} />
+
+              <ArrowRight
+                size={18}
+                strokeWidth={2}
+                className="!ml-2"
+              />
             </button>
-          </form>
+
+          </div>
 
           {/* Sign In */}
-          <p className="signin-text">
-            Already have an account?{" "}
-            <Link href="/signin">Sign in</Link>
-          </p>
+          <div className="!border-t !border-[var(--border-light)] !px-6 !py-5 sm:!px-10">
+
+            <p className="!m-0 !text-center !text-sm !font-normal !text-[var(--text-secondary)]">
+              Already have an account?{" "}
+
+              <Link
+                href="/auth/login"
+                className="!font-bold !text-[var(--primary)] !no-underline hover:!text-[var(--primary-dark)]"
+              >
+                Sign in
+              </Link>
+            </p>
+
+          </div>
+
         </div>
+
       </div>
     </main>
   );
