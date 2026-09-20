@@ -3,6 +3,8 @@ import "./globals.css";
 import navbar from "./NavBar/page";
 import Navbar from "../components/LandingPage/Navbar";
 import Footer from "../components/LandingPage/Footer";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export const metadata: Metadata = {
   title: "RCMS",
@@ -17,6 +19,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
+        <ToastContainer/>
         <Navbar/>
         {/* <Footer/> */}
         <main style={{paddingTop:72}}>{children}</main>
