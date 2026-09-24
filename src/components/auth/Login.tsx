@@ -1,11 +1,32 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import {Lock,Mail,Eye,EyeOff,ArrowRight,} from "lucide-react";
+import axios from "axios";
+import { toast } from "react-toastify";
 
 export default function SignInPage() {
   const [showPassword, setShowPassword] = useState(false);
+  const [email,setEmail]=useState("")
+  const [password,setPassword]=useState("")
+
+const handleLogin=async(e:React.FormEvent<HTMLElement>)=>{
+  e.preventDefault()
+  try {
+    const response=await axios.post(`http://localhost:3000/auth/login`,{
+      email,password
+    })
+    setEmail(""),
+    setPassword("")
+    toast.success("Login successful successful!");
+    console.log(response)
+    window.location.href="http://http://localhost:3001/"
+  } catch (error) {
+    console.log(error)
+    toast.error("login failed");
+  }
+}
 
   return (
     <main className="!min-h-screen !bg-[var(--background-secondary)] !px-4 !py-8 sm:!px-6 sm:!py-12">
@@ -38,9 +59,9 @@ export default function SignInPage() {
               </p>
 
             </div>
-
+{/* /////////////////// */}
             {/* Form UI */}
-            <div className="!m-0">
+            <form onSubmit={handleLogin} className="!m-0">
 
               {/* Email */}
               <div className="!mb-5">
@@ -64,6 +85,8 @@ export default function SignInPage() {
                     id="email"
                     name="email"
                     type="email"
+                    value={email}
+                    onChange={(e)=>setEmail(e.target.value)}
                     placeholder="Enter your email"
                     autoComplete="email"
                     className="!m-0 !block !h-12 !w-full !rounded-[var(--radius-md)] !border !border-[var(--border)] !bg-[var(--background)] !px-4 !py-3 !pl-11 !text-sm !font-normal !text-[var(--text-primary)] !outline-none !transition-all !placeholder:text-[var(--text-muted)] focus:!border-[var(--primary)] focus:!ring-2 focus:!ring-[var(--primary-light)]"
@@ -86,7 +109,7 @@ export default function SignInPage() {
                   </label>
 
                   <Link
-                    href="/forgot-password"
+                    href="/auth/ForgetPassword"
                     className="!m-0 !text-sm !font-semibold !text-[var(--primary)] !no-underline hover:!text-[var(--primary-dark)]"
                   >
                     Forgot password?
@@ -106,6 +129,8 @@ export default function SignInPage() {
                     id="password"
                     name="password"
                     type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e)=>setPassword(e.target.value)}
                     placeholder="Enter your password"
                     autoComplete="current-password"
                     className="!m-0 !block !h-12 !w-full !rounded-[var(--radius-md)] !border !border-[var(--border)] !bg-[var(--background)] !px-4 !py-3 !pl-11 !pr-12 !text-sm !font-normal !text-[var(--text-primary)] !outline-none !transition-all !placeholder:text-[var(--text-muted)] focus:!border-[var(--primary)] focus:!ring-2 focus:!ring-[var(--primary-light)]"
@@ -136,8 +161,10 @@ export default function SignInPage() {
               </div>
 
               {/* Sign In Button */}
-              <button
-                type="button"
+
+
+     <button
+                type="submit"
                 className="!m-0 !flex !h-12 !w-full !items-center !justify-center !rounded-[var(--radius-md)] !border-0 !bg-[var(--primary)] !px-5 !py-3 !text-sm !font-semibold !text-white !shadow-none !transition-colors hover:!bg-[var(--primary-dark)] focus:!outline-none focus:!ring-2 focus:!ring-[var(--primary-light)] focus:!ring-offset-2"
               >
                 Sign In
@@ -149,8 +176,8 @@ export default function SignInPage() {
                 />
               </button>
 
-            </div>
-
+            </form>
+{/* /////////////////// */}
           </div>
 
           {/* Bottom */}

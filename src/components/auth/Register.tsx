@@ -26,7 +26,7 @@ export default function SignUpPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [passWord, setPassWord] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [phoneNumber, setphoneNumber] = useState("");
 
   useEffect(() => {
     const getDistrict = async () => {
@@ -104,11 +104,9 @@ export default function SignUpPage() {
       setVillage([]);
       return;
     }
-
     const response = await axios.get(
       `http://localhost:3000/location/cells/${cellId}/villages`
     );
-
     setVillage(response.data);
   };
 
@@ -126,19 +124,19 @@ export default function SignUpPage() {
     e.preventDefault();
 
     try {
-      const response = await axios.post(
-        `http://localhost:3000/auth/register`,
-        {
+      const response = await axios.post(`http://localhost:3000/auth/register`,{
           name,
           email,
           password: passWord,
           villageId,
+          phoneNumber
         }
       );
 
       console.log(`Registration successful${response.data}`);
 
       toast.success("Registration successful!");
+      window.location.href="/auth/login"
 
       setName("");
       setEmail("");
@@ -148,6 +146,7 @@ export default function SignUpPage() {
       setSectorsId("");
       setCellId("");
       setVillageId("");
+      setphoneNumber("")
 
       setSectors([]);
       setCells([]);
@@ -294,6 +293,45 @@ export default function SignUpPage() {
                     </button>
                   </div>
                 </div>
+                {/* //////////// */}
+
+
+{/* Password */}
+                <div>
+                  <label
+                    htmlFor="password"
+                    className="!mb-1.5 !block !text-sm !font-medium !text-[var(--text-primary)]"
+                  >
+                    Password
+                  </label>
+
+                  <div className="!relative ">
+                    <Lock
+                      size={18}
+                      strokeWidth={1.8}
+                      className="pointer-events-none !absolute !left-3.5 !top-1/2 !z-10 !-translate-y-1/2 !text-[var(--text-muted)]"
+                    />
+
+                    <input
+                      id="password"
+                      name="password"
+                      value={phoneNumber}
+                      onChange={(e)=>setphoneNumber(e.target.value)}
+                      placeholder="+250"
+                      autoComplete="new-password"
+                      className="!m-0 !block !h-12 !w-full !rounded-[var(--radius-md)] !border !border-[var(--border)] !bg-[var(--background)] !px-4 !py-3 !pl-11 !pr-12 !text-sm !font-normal !text-[var(--text-primary)] !outline-none !transition-all !placeholder:text-[var(--text-muted)] focus:!border-[var(--primary)] focus:!ring-2 focus:!ring-[var(--primary-light)]"
+                    />
+
+                    <button
+                      type="button" className="!absolute !right-3 !top-1/2 !flex !h-8 !w-8 !-translate-y-1/2 !items-center !justify-center !rounded-md !border-0 !bg-transparent !p-0 !text-[var(--text-muted)] !transition-colors hover:!text-[var(--primary)] focus:!outline-none"
+                    >
+                    </button>
+                  </div>
+                </div>
+                {/* //////////// */}
+
+
+
               </div>
 
               {/* Location Information */}
