@@ -28,6 +28,7 @@ export default function SignUpPage() {
   const [passWord, setPassWord] = useState("");
   const [phoneNumber, setphoneNumber] = useState("");
 
+
   useEffect(() => {
     const getDistrict = async () => {
       try {

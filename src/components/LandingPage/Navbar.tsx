@@ -9,7 +9,15 @@ import {
   LogIn,
   UserPlus,
 } from "lucide-react";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
+import axios from "axios";
+
+const [user,setUser]=useState<{
+  name:string,
+  email:string
+}|null>(null)
+
+const [role,setRole]=useState("Citizen")
 
 type NavLink = {
   label: string;
@@ -33,6 +41,8 @@ export default function Navbar() {
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
+  const searchParamas=useSearchParams()
+  const token=searchParamas.get('token')
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -68,6 +78,31 @@ export default function Navbar() {
       document.removeEventListener("keydown", handleEscape);
     };
   }, []);
+
+
+// getting me
+useEffect(()=>{
+  const handleGetMe=async()=>{
+    try {
+      const response=await axios.get(`http://localhost:3000/auth/me`,{
+      headers:{
+        Authorization:`Bearer ${token}`
+      }
+      })
+
+      setUser({
+        name:response.data.name,
+        email:response.data.email
+      })
+
+    } catch (error) {
+      console.log(error)
+    }
+  }
+  if (token) {
+    handleGetMe()
+  }
+},[token])
 
   return (
     <header
@@ -251,11 +286,17 @@ export default function Navbar() {
                     "background-color 0.15s, border-color 0.15s",
                 }}
               >
-                <UserRound
+               {
+                user ?(
+                  <span style={{fontSize:14,fontWeight:600}}>{user.name}</span>
+                ):(
+                   <UserRound
                   size={14}
                   strokeWidth={1.8}
                   color="var(--text-muted)"
                 />
+                )
+               }
 
                 <span>{role}</span>
 

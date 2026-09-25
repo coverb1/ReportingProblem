@@ -35,7 +35,9 @@ export default function ResetPasswordPage() {
         newPassword,
         token
       })
-
+setnewPassword("")
+setnewPassword("")
+window.location.href="/auth/login"
       console.log(response.data, "password Resert Successfu")
     } catch (error) {
       console.log(error)
@@ -56,9 +58,9 @@ export default function ResetPasswordPage() {
 
           {/* Header */}
           <div className="signup-header">
-            <div className="signup-icon">
+            {/* <div className="signup-icon">
               <ShieldCheck size={24} />
-            </div>
+            </div> */}
 
             <h1>Reset Password</h1>
 
