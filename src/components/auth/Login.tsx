@@ -19,9 +19,10 @@ const handleLogin=async(e:React.FormEvent<HTMLElement>)=>{
     })
     setEmail(""),
     setPassword("")
+    localStorage.setItem("token",response.data.accessToken)
     toast.success("Login successful successful!");
     console.log(response)
-    window.location.href="http://http://localhost:3001/"
+    window.location.href="http://localhost:3001/"
   } catch (error) {
     console.log(error)
     toast.error("login failed");

@@ -9,15 +9,8 @@ import {
   LogIn,
   UserPlus,
 } from "lucide-react";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import axios from "axios";
-
-const [user,setUser]=useState<{
-  name:string,
-  email:string
-}|null>(null)
-
-const [role,setRole]=useState("Citizen")
 
 type NavLink = {
   label: string;
@@ -30,19 +23,92 @@ const LINKS: NavLink[] = [
   { label: "Public Map", href: "/locationmap" },
 ];
 
-const ROLE_OPTIONS = ["Citizen", "Organisation", "Staff", "Admin"];
+const ROLE_OPTIONS = [
+  "Citizen",
+  "Organisation",
+  "Staff",
+  "Admin",
+];
 
 export default function Navbar() {
   const pathname = usePathname();
 
+  // User information
+  const [user, setUser] = useState<{
+    name: string;
+    email: string;
+    role: string;
+  } | null>(null);
+
+  // JWT token
+  const [token, setToken] = useState<string | null>(null);
+
+  // Your existing role dropdown
   const [role, setRole] = useState("Citizen");
+
   const [open, setOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
-  const searchParamas=useSearchParams()
-  const token=searchParamas.get('token')
+
+  // =========================================================
+  // GET TOKEN FROM LOCAL STORAGE
+  // =========================================================
+
+  useEffect(() => {
+    const savedToken = localStorage.getItem("token");
+
+    setToken(savedToken);
+  }, []);
+
+  // =========================================================
+  // GET CURRENT USER
+  // =========================================================
+
+  useEffect(() => {
+    const handleGetMe = async () => {
+      try {
+        const response = await axios.get(
+          "http://localhost:3000/auth/me",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        console.log("CURRENT USER:", response.data);
+
+        setUser({
+          name: response.data.name,
+          email: response.data.email,
+          role: response.data.role,
+        });
+
+        // If you want the role dropdown to show
+        // the user's backend role
+        setRole(response.data.role);
+
+      } catch (error) {
+        console.log("GET ME ERROR:", error);
+
+        // Token may be expired or invalid
+        localStorage.removeItem("token");
+
+        setToken(null);
+        setUser(null);
+      }
+    };
+
+    if (token) {
+      handleGetMe();
+    }
+  }, [token]);
+
+  // =========================================================
+  // CLOSE DROPDOWNS WHEN CLICKING OUTSIDE
+  // =========================================================
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -70,39 +136,76 @@ export default function Navbar() {
       }
     }
 
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("keydown", handleEscape);
+    document.addEventListener(
+      "mousedown",
+      handleClickOutside
+    );
+
+    document.addEventListener(
+      "keydown",
+      handleEscape
+    );
 
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("keydown", handleEscape);
+      document.removeEventListener(
+        "mousedown",
+        handleClickOutside
+      );
+
+      document.removeEventListener(
+        "keydown",
+        handleEscape
+      );
     };
   }, []);
 
+  // =========================================================
+  // LOGOUT
+  // =========================================================
 
-// getting me
-useEffect(()=>{
-  const handleGetMe=async()=>{
-    try {
-      const response=await axios.get(`http://localhost:3000/auth/me`,{
-      headers:{
-        Authorization:`Bearer ${token}`
-      }
-      })
+  const handleLogout = () => {
+    // Remove JWT
+    localStorage.removeItem("token");
 
-      setUser({
-        name:response.data.name,
-        email:response.data.email
-      })
+    // Clear React state
+    setToken(null);
+    setUser(null);
 
-    } catch (error) {
-      console.log(error)
+    // Close dropdown
+    setProfileOpen(false);
+
+    // Go home
+    window.location.href = "/";
+  };
+
+  // =========================================================
+  // CONVERT BACKEND ROLE TO FRIENDLY NAME
+  // =========================================================
+
+  const getRoleName = (backendRole: string) => {
+    switch (backendRole) {
+      case "CITIZEN":
+        return "Citizen";
+
+      case "VILLAGE_LEADER":
+        return "Village Leader";
+
+      case "CELL_LEADER":
+        return "Cell Leader";
+
+      case "SECTOR_LEADER":
+        return "Sector Leader";
+
+      case "DISTRICT_ADMIN":
+        return "District Admin";
+
+      case "SUPER_ADMIN":
+        return "Super Admin";
+
+      default:
+        return backendRole;
     }
-  }
-  if (token) {
-    handleGetMe()
-  }
-},[token])
+  };
 
   return (
     <header
@@ -129,10 +232,18 @@ useEffect(()=>{
             justifyContent: "space-between",
           }}
         >
-          
-          <div style={{display: "flex",alignItems: "center",}}
+          {/* =====================================================
+              LEFT SIDE
+          ====================================================== */}
+
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+            }}
           >
-            
+            {/* LOGO */}
+
             <Link
               href="/"
               style={{
@@ -189,7 +300,8 @@ useEffect(()=>{
               </div>
             </Link>
 
-           
+            {/* NAVIGATION LINKS */}
+
             <div
               style={{
                 marginLeft: 40,
@@ -204,7 +316,9 @@ useEffect(()=>{
                   link.href === "/"
                     ? pathname === "/"
                     : pathname === link.href ||
-                      pathname.startsWith(link.href + "/");
+                      pathname.startsWith(
+                        link.href + "/"
+                      );
 
                 return (
                   <Link
@@ -240,7 +354,10 @@ useEffect(()=>{
             </div>
           </div>
 
-          
+          {/* =====================================================
+              RIGHT SIDE
+          ====================================================== */}
+
           <div
             style={{
               display: "flex",
@@ -248,7 +365,10 @@ useEffect(()=>{
               gap: 12,
             }}
           >
-          
+            {/* =================================================
+                ROLE DROPDOWN
+            ================================================== */}
+
             <div
               ref={dropdownRef}
               style={{
@@ -286,19 +406,32 @@ useEffect(()=>{
                     "background-color 0.15s, border-color 0.15s",
                 }}
               >
-               {
-                user ?(
-                  <span style={{fontSize:14,fontWeight:600}}>{user.name}</span>
-                ):(
-                   <UserRound
-                  size={14}
-                  strokeWidth={1.8}
-                  color="var(--text-muted)"
-                />
-                )
-               }
+                {/* USER ICON / USER NAME */}
 
-                <span>{role}</span>
+                {user ? (
+                  <span
+                    style={{
+                      fontSize: 14,
+                      fontWeight: 600,
+                    }}
+                  >
+                    {user.name}
+                  </span>
+                ) : (
+                  <UserRound
+                    size={14}
+                    strokeWidth={1.8}
+                    color="var(--text-muted)"
+                  />
+                )}
+
+                {/* ROLE */}
+
+                <span>
+                  {user
+                    ? getRoleName(user.role)
+                    : role}
+                </span>
 
                 <ChevronDown
                   size={11}
@@ -308,12 +441,14 @@ useEffect(()=>{
                     transform: open
                       ? "rotate(180deg)"
                       : "rotate(0deg)",
-                    transition: "transform 0.15s",
+                    transition:
+                      "transform 0.15s",
                   }}
                 />
               </button>
 
               {/* ROLE MENU */}
+
               {open && (
                 <ul
                   role="listbox"
@@ -333,7 +468,8 @@ useEffect(()=>{
                   }}
                 >
                   {ROLE_OPTIONS.map((option) => {
-                    const active = option === role;
+                    const active =
+                      option === role;
 
                     return (
                       <li
@@ -353,7 +489,8 @@ useEffect(()=>{
                             padding: "0 10px",
                             display: "flex",
                             alignItems: "center",
-                            justifyContent: "space-between",
+                            justifyContent:
+                              "space-between",
                             gap: 8,
                             borderRadius:
                               "var(--radius-sm)",
@@ -365,7 +502,9 @@ useEffect(()=>{
                               ? "var(--primary)"
                               : "var(--text-secondary)",
                             fontSize: 13,
-                            fontWeight: active ? 600 : 500,
+                            fontWeight: active
+                              ? 600
+                              : 500,
                             lineHeight: 1,
                             cursor: "pointer",
                             textAlign: "left",
@@ -400,7 +539,10 @@ useEffect(()=>{
               )}
             </div>
 
-       
+            {/* =================================================
+                REPORT BUTTON
+            ================================================== */}
+
             <Link
               href="/reports/new"
               className="btn-primary"
@@ -413,49 +555,84 @@ useEffect(()=>{
               + Report
             </Link>
 
-           
+            {/* =================================================
+                PROFILE
+            ================================================== */}
+
             <div
               ref={profileRef}
               style={{
                 position: "relative",
               }}
-              onMouseEnter={() => setProfileOpen(true)}
-              onMouseLeave={() => setProfileOpen(false)}
             >
-              
-              <button
-                type="button"
-                aria-label="Account menu"
-                aria-haspopup="menu"
-                aria-expanded={profileOpen}
-                onClick={() => {
-                  setProfileOpen((v) => !v);
-                  setOpen(false);
-                }}
-                style={{
-                  width: 38,
-                  height: 38,
-                  flexShrink: 0,
-                  borderRadius: "9999px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  background: "var(--primary-light)",
-                  border: "1px solid var(--border)",
-                  color: "var(--primary)",
-                  cursor: "pointer",
-                  transition:
-                    "background-color 0.15s, border-color 0.15s",
-                }}
-              >
-                <UserRound
-                  size={17}
-                  strokeWidth={2}
-                />
-              </button>
+              {/* =================================================
+                  LOGGED IN
+              ================================================== */}
 
-              {/* ================= AUTH DROPDOWN ================= */}
-              {profileOpen && (
+              {user ? (
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  style={{
+                    height: 38,
+                    padding: "0 14px",
+                    borderRadius:
+                      "var(--radius-sm)",
+                    border:
+                      "1px solid var(--border)",
+                    background: "var(--card)",
+                    color: "var(--text-primary)",
+                    cursor: "pointer",
+                    fontSize: 13,
+                    fontWeight: 600,
+                  }}
+                >
+                  Logout
+                </button>
+              ) : (
+                /* =================================================
+                   NOT LOGGED IN
+                ================================================== */
+
+                <button
+                  type="button"
+                  aria-label="Account menu"
+                  aria-haspopup="menu"
+                  aria-expanded={profileOpen}
+                  onClick={() => {
+                    setProfileOpen((v) => !v);
+                    setOpen(false);
+                  }}
+                  style={{
+                    width: 38,
+                    height: 38,
+                    flexShrink: 0,
+                    borderRadius: "9999px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    background:
+                      "var(--primary-light)",
+                    border:
+                      "1px solid var(--border)",
+                    color: "var(--primary)",
+                    cursor: "pointer",
+                    transition:
+                      "background-color 0.15s, border-color 0.15s",
+                  }}
+                >
+                  <UserRound
+                    size={17}
+                    strokeWidth={2}
+                  />
+                </button>
+              )}
+
+              {/* =================================================
+                  AUTH DROPDOWN
+              ================================================== */}
+
+              {profileOpen && !user && (
                 <div
                   role="menu"
                   style={{
@@ -464,7 +641,8 @@ useEffect(()=>{
                     right: 0,
                     width: 300,
                     background: "var(--card)",
-                    border: "1px solid var(--border)",
+                    border:
+                      "1px solid var(--border)",
                     borderRadius: 18,
                     padding: 8,
                     boxShadow:
@@ -472,11 +650,14 @@ useEffect(()=>{
                     zIndex: 100,
                   }}
                 >
-               
+                  {/* SIGN IN */}
+
                   <Link
                     href="/auth/login"
                     role="menuitem"
-                    onClick={() => setProfileOpen(false)}
+                    onClick={() =>
+                      setProfileOpen(false)
+                    }
                     style={{
                       width: "100%",
                       height: 52,
@@ -485,7 +666,8 @@ useEffect(()=>{
                       alignItems: "center",
                       gap: 13,
                       borderRadius: 12,
-                      color: "var(--text-primary)",
+                      color:
+                        "var(--text-primary)",
                       fontSize: 14,
                       fontWeight: 500,
                       textDecoration: "none",
@@ -515,17 +697,24 @@ useEffect(()=>{
 
                     <span>Sign In</span>
                   </Link>
+
                   <div
                     style={{
                       height: 1,
-                      background: "var(--border)",
+                      background:
+                        "var(--border)",
                       margin: "4px 8px",
                     }}
                   />
+
+                  {/* SIGN UP */}
+
                   <Link
                     href="/auth/register"
                     role="menuitem"
-                    onClick={() => setProfileOpen(false)}
+                    onClick={() =>
+                      setProfileOpen(false)
+                    }
                     style={{
                       width: "100%",
                       height: 52,
@@ -533,7 +722,14 @@ useEffect(()=>{
                       display: "flex",
                       alignItems: "center",
                       gap: 13,
-                      borderRadius: 12,color: "var(--text-primary)",fontSize: 14,fontWeight: 500,textDecoration: "none",transition:"background-color 0.15s, color 0.15s",
+                      borderRadius: 12,
+                      color:
+                        "var(--text-primary)",
+                      fontSize: 14,
+                      fontWeight: 500,
+                      textDecoration: "none",
+                      transition:
+                        "background-color 0.15s, color 0.15s",
                     }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.background =
