@@ -52,9 +52,7 @@ export default function Navbar() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
 
-  // =========================================================
-  // GET TOKEN FROM LOCAL STORAGE
-  // =========================================================
+  
 
   useEffect(() => {
     const savedToken = localStorage.getItem("token");
@@ -62,9 +60,7 @@ export default function Navbar() {
     setToken(savedToken);
   }, []);
 
-  // =========================================================
-  // GET CURRENT USER
-  // =========================================================
+  
 
   useEffect(() => {
     const handleGetMe = async () => {
@@ -86,14 +82,13 @@ export default function Navbar() {
           role: response.data.role,
         });
 
-        // If you want the role dropdown to show
-        // the user's backend role
+   
         setRole(response.data.role);
 
       } catch (error) {
         console.log("GET ME ERROR:", error);
 
-        // Token may be expired or invalid
+        
         localStorage.removeItem("token");
 
         setToken(null);
@@ -106,9 +101,7 @@ export default function Navbar() {
     }
   }, [token]);
 
-  // =========================================================
-  // CLOSE DROPDOWNS WHEN CLICKING OUTSIDE
-  // =========================================================
+
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -159,28 +152,24 @@ export default function Navbar() {
     };
   }, []);
 
-  // =========================================================
-  // LOGOUT
-  // =========================================================
+
 
   const handleLogout = () => {
-    // Remove JWT
+  
     localStorage.removeItem("token");
 
-    // Clear React state
+    
     setToken(null);
     setUser(null);
 
-    // Close dropdown
+
     setProfileOpen(false);
 
-    // Go home
+
     window.location.href = "/";
   };
 
-  // =========================================================
-  // CONVERT BACKEND ROLE TO FRIENDLY NAME
-  // =========================================================
+
 
   const getRoleName = (backendRole: string) => {
     switch (backendRole) {
@@ -232,9 +221,7 @@ export default function Navbar() {
             justifyContent: "space-between",
           }}
         >
-          {/* =====================================================
-              LEFT SIDE
-          ====================================================== */}
+        
 
           <div
             style={{
@@ -242,7 +229,7 @@ export default function Navbar() {
               alignItems: "center",
             }}
           >
-            {/* LOGO */}
+           
 
             <Link
               href="/"
@@ -300,7 +287,7 @@ export default function Navbar() {
               </div>
             </Link>
 
-            {/* NAVIGATION LINKS */}
+           
 
             <div
               style={{
@@ -354,9 +341,7 @@ export default function Navbar() {
             </div>
           </div>
 
-          {/* =====================================================
-              RIGHT SIDE
-          ====================================================== */}
+          
 
           <div
             style={{
@@ -365,9 +350,7 @@ export default function Navbar() {
               gap: 12,
             }}
           >
-            {/* =================================================
-                ROLE DROPDOWN
-            ================================================== */}
+           
 
             <div
               ref={dropdownRef}
@@ -539,9 +522,7 @@ export default function Navbar() {
               )}
             </div>
 
-            {/* =================================================
-                REPORT BUTTON
-            ================================================== */}
+           
 
             <Link
               href="/reports/new"
@@ -555,19 +536,14 @@ export default function Navbar() {
               + Report
             </Link>
 
-            {/* =================================================
-                PROFILE
-            ================================================== */}
-
+           
             <div
               ref={profileRef}
               style={{
                 position: "relative",
               }}
             >
-              {/* =================================================
-                  LOGGED IN
-              ================================================== */}
+              
 
               {user ? (
                 <button
@@ -590,10 +566,7 @@ export default function Navbar() {
                   Logout
                 </button>
               ) : (
-                /* =================================================
-                   NOT LOGGED IN
-                ================================================== */
-
+                
                 <button
                   type="button"
                   aria-label="Account menu"
@@ -628,9 +601,7 @@ export default function Navbar() {
                 </button>
               )}
 
-              {/* =================================================
-                  AUTH DROPDOWN
-              ================================================== */}
+             
 
               {profileOpen && !user && (
                 <div

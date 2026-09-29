@@ -39,13 +39,13 @@ export default function Hero() {
           </p>
 
           <div style={{ display: "flex", gap: 14, marginTop: 32, flexWrap: "wrap" }}>
-            <a href="/report" className="btn-primary">
-              Report a Problem
+            <a href="/reportProblem" className="btn-primary">
+              Report a Problem...
               <ArrowRight size={18} style={{ marginLeft: 8 }} />
             </a>
             <a href="/problems" className="btn-secondary">
               <MapPin size={18} style={{ marginRight: 8 }} />
-              View Problems Near Me
+              View Problems 
             </a>
           </div>
 
