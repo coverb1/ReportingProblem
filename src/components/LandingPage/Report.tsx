@@ -35,7 +35,7 @@ export default function Hero() {
 
           <p style={{ marginTop: 20, fontSize: 17, maxWidth: 460 }}>
             Report problems in your community and help make Rwanda a better
-            place for everyone.
+            place for everyone hey my name is m
           </p>
 
           <div style={{ display: "flex", gap: 14, marginTop: 32, flexWrap: "wrap" }}>
