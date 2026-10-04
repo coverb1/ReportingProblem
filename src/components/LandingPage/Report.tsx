@@ -27,7 +27,7 @@ export default function Hero() {
 
           <h1 style={{ marginTop: 20 }}>
             See a problem.
-            <br />
+            <br/>
             Report it.
             <br />
             Track it. <span style={{ color: "var(--primary)" }}>Fix it.</span>
@@ -40,7 +40,7 @@ export default function Hero() {
 
           <div style={{ display: "flex", gap: 14, marginTop: 32, flexWrap: "wrap" }}>
             <a href="/reportProblem" className="btn-primary">
-              Report a Problem...
+              Report a Problem
               <ArrowRight size={18} style={{ marginLeft: 8 }} />
             </a>
             <a href="/problems" className="btn-secondary">

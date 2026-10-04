@@ -1,393 +1,852 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
+import Link from "next/link";
 import {
   ArrowLeft,
-  ArrowRight,
   Camera,
-  Home,
-  Droplet,
+  Check,
+  ChevronRight,
+  Droplets,
+  FileText,
   Lightbulb,
+  MapPin,
+  MessageSquare,
   Recycle,
+  Road,
+  Send,
+  Trash2,
   Waves,
-  Construction,
-  Bot,
 } from "lucide-react";
 
 type Category = {
-  id: string;
-  label: string;
-  icon: typeof Home;
-  iconColor: string;
+  name: string;
+  icon: React.ReactNode;
 };
 
-const CATEGORIES: Category[] = [
-  { id: "road", label: "Road Infrastructure", icon: Home, iconColor: "#c9822e" },
-  { id: "water", label: "Water", icon: Droplet, iconColor: "#5b8fc7" },
-  { id: "lighting", label: "Street Lighting", icon: Lightbulb, iconColor: "#b89b3c" },
-  { id: "waste", label: "Waste Management", icon: Recycle, iconColor: "#4f9d78" },
-  { id: "drainage", label: "Drainage", icon: Waves, iconColor: "#5b8fc7" },
-  { id: "public", label: "Public Infrastructure", icon: Construction, iconColor: "#c65d52" },
+const categories: Category[] = [
+  {
+    name: "Roads",
+    icon: <Road size={20} strokeWidth={1.8} />,
+  },
+  {
+    name: "Water",
+    icon: <Droplets size={20} strokeWidth={1.8} />,
+  },
+  {
+    name: "Street Lighting",
+    icon: <Lightbulb size={20} strokeWidth={1.8} />,
+  },
+  {
+    name: "Waste",
+    icon: <Recycle size={20} strokeWidth={1.8} />,
+  },
+  {
+    name: "Drainage",
+    icon: <Waves size={20} strokeWidth={1.8} />,
+  },
+  {
+    name: "Public Infrastructure",
+    icon: <Trash2 size={20} strokeWidth={1.8} />,
+  },
 ];
 
-const STEPS = [
-  { number: 1, label: "Describe" },
-  { number: 2, label: "Location" },
-  { number: 3, label: "Review" },
-];
-
-const MIN_CHARS_FOR_AI = 30;
-
-export default function ReportProblemForm() {
+export default function ReportProblemPage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [category, setCategory] = useState("");
+  const [specificLocation, setSpecificLocation] = useState("");
   const [isPublic, setIsPublic] = useState(true);
-  const [photoName, setPhotoName] = useState<string | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [photo, setPhoto] = useState<File | null>(null);
 
-  const charsLeftForAI = Math.max(MIN_CHARS_FOR_AI - description.length, 0);
-  const aiActive = description.length >= MIN_CHARS_FOR_AI;
+  const handlePhotoChange = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0] ?? null;
+    setPhoto(file);
+  };
 
-  function handleFile(file: File | null) {
-    if (file) setPhotoName(file.name);
-  }
+  const handleSubmit = (
+    event: React.FormEvent<HTMLFormElement>,
+  ) => {
+    event.preventDefault();
+
+    // Backend submission will be connected later.
+    console.log({
+      title,
+      description,
+      category,
+      specificLocation,
+      isPublic,
+      photo,
+    });
+  };
 
   return (
-    <div
+    <main
       style={{
-        backgroundColor: "#060d16",
         minHeight: "100vh",
-        padding: "32px 32px 80px",
-        fontFamily: "'Century Gothic', 'AppleGothic', Arial, sans-serif",
-        color: "#f5f7fa",
+        background: "var(--background-secondary)",
+        paddingBottom: 80,
       }}
     >
-      <div style={{ maxWidth: 1200, marginLeft: "auto", marginRight: "auto" }}>
-        {/* BACK LINK */}
-        <button
-          type="button"
-          className="flex items-center"
-          style={{ gap: 6, fontSize: 13, color: "#08aeea", background: "none", border: "none", cursor: "pointer" }}
+      {/* =====================================================
+          HEADER
+      ====================================================== */}
+      <div
+        style={{
+          borderBottom: "1px solid var(--border-light)",
+          background: "var(--card)",
+        }}
+      >
+        <div
+          className="container"
+          style={{
+            minHeight: 72,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 20,
+          }}
         >
-          <ArrowLeft size={14} />
-          Back
-        </button>
+          <Link
+            href="/"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 9,
+              color: "var(--text-secondary)",
+              fontSize: 14,
+              fontWeight: 500,
+              textDecoration: "none",
+            }}
+          >
+            <ArrowLeft size={17} />
+            Back to home
+          </Link>
 
-        {/* TITLE */}
-        <h1 className="font-serif font-bold" style={{ fontSize: 32, marginTop: 16 }}>
-          Report a Community Problem
-        </h1>
-        <p style={{ color: "#5b8fc7", fontSize: 14, marginTop: 8 }}>
-          Write freely — AI will classify, prioritize, and route your report automatically.
-        </p>
+          <div
+            style={{
+              color: "var(--primary)",
+              fontSize: 21,
+              fontWeight: 800,
+              letterSpacing: "-0.4px",
+            }}
+          >
+            RCPMS
+          </div>
+        </div>
+      </div>
 
-        {/* STEPPER */}
-        <div className="flex items-center" style={{ marginTop: 28, marginBottom: 32 }}>
-          {STEPS.map((step, i) => (
-            <div key={step.number} className="flex items-center">
-              <div className="flex items-center" style={{ gap: 10 }}>
-                <div
-                  className="flex items-center justify-center font-bold"
-                  style={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: "50%",
-                    fontSize: 13,
-                    backgroundColor: step.number === 1 ? "#08aeea" : "transparent",
-                    border: step.number === 1 ? "none" : "1px solid #2a3a4c",
-                    color: step.number === 1 ? "#ffffff" : "#55708e",
-                  }}
-                >
-                  {step.number}
-                </div>
-                <span
-                  className="font-semibold"
-                  style={{ fontSize: 14, color: step.number === 1 ? "#f5f7fa" : "#55708e" }}
-                >
-                  {step.label}
-                </span>
-              </div>
-              {i < STEPS.length - 1 && (
-                <div style={{ width: 60, height: 1, backgroundColor: "#1b344b", margin: "0 16px" }} />
-              )}
-            </div>
-          ))}
+      {/* =====================================================
+          PAGE CONTENT
+      ====================================================== */}
+      <div
+        className="container"
+        style={{
+          maxWidth: 980,
+          paddingTop: 52,
+        }}
+      >
+        {/* PAGE INTRO */}
+        <div
+          style={{
+            maxWidth: 680,
+            marginBottom: 34,
+          }}
+        >
+          <div
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 7,
+              color: "var(--primary)",
+              fontSize: 13,
+              fontWeight: 600,
+              marginBottom: 13,
+            }}
+          >
+            <MessageSquare size={16} />
+            Community report
+          </div>
+
+          <h1
+            style={{
+              margin: 0,
+              fontSize: "clamp(2rem, 4vw, 3rem)",
+              lineHeight: 1.12,
+              letterSpacing: "-0.035em",
+            }}
+          >
+            Report a problem
+          </h1>
+
+          <p
+            style={{
+              marginTop: 13,
+              marginBottom: 0,
+              maxWidth: 620,
+              fontSize: 16,
+              lineHeight: 1.7,
+              color: "var(--text-secondary)",
+            }}
+          >
+            Tell us what is happening in your community. Your
+            report will be sent to the local authority responsible
+            for your area.
+          </p>
         </div>
 
-        {/* MAIN GRID */}
-        <div className="flex" style={{ gap: 24, alignItems: "flex-start" }}>
-          {/* LEFT COLUMN */}
-          <div style={{ flex: 2 }}>
-            {/* PROBLEM TITLE */}
-            <label className="font-semibold" style={{ fontSize: 14, display: "block", marginBottom: 8 }}>
-              Problem Title
-            </label>
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Brief summary of the problem"
-              className="w-full"
+        <form>
+          {/* =====================================================
+              PROBLEM DETAILS
+          ====================================================== */}
+          <section
+            className="card"
+            style={{
+              padding: 30,
+              marginBottom: 20,
+            }}
+          >
+            {/* SECTION HEADER */}
+            <div
               style={{
-                backgroundColor: "#0c1a2a",
-                border: "1px solid #1b344b",
-                borderRadius: 10,
-                padding: "13px 16px",
-                fontSize: 14,
-                color: "#f5f7fa",
-                outline: "none",
+                marginBottom: 28,
               }}
-            />
-
-            {/* DESCRIPTION */}
-            <div style={{ marginTop: 20 }}>
-              <div className="flex items-baseline" style={{ gap: 8, marginBottom: 8 }}>
-                <label className="font-semibold" style={{ fontSize: 14 }}>
-                  Describe the problem
-                </label>
-                <span style={{ fontSize: 12, color: "#55708e" }}>AI reads this to classify and prioritize</span>
-              </div>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Example: There is a big hole on the road near the school. It is getting bigger after rain and children might fall..."
-                rows={5}
-                className="w-full"
+            >
+              <h2
                 style={{
-                  backgroundColor: "#0c1a2a",
-                  border: "1px solid #1b344b",
-                  borderRadius: 10,
-                  padding: "13px 16px",
-                  fontSize: 14,
-                  color: "#f5f7fa",
-                  outline: "none",
-                  resize: "vertical",
-                  lineHeight: 1.6,
+                  margin: 0,
+                  fontSize: 20,
+                  lineHeight: 1.3,
+                  letterSpacing: "-0.01em",
                 }}
-              />
-              <p style={{ fontSize: 12, color: "#55708e", marginTop: 8 }}>
-                {description.length} chars ·{" "}
-                {aiActive ? "AI analysis active" : `${charsLeftForAI} more to activate AI`}
+              >
+                What is the problem?
+              </h2>
+
+              <p
+                style={{
+                  margin: "6px 0 0",
+                  fontSize: 13,
+                  color: "var(--text-muted)",
+                }}
+              >
+                Give us a short description of the issue.
               </p>
             </div>
 
-            {/* CATEGORY */}
-            <div style={{ marginTop: 24 }}>
-              <div className="flex items-baseline" style={{ gap: 8, marginBottom: 12 }}>
-                <label className="font-semibold" style={{ fontSize: 14 }}>
-                  Category
+            {/* TITLE */}
+            <div style={{ marginBottom: 23 }}>
+              <label htmlFor="title">
+                Problem title
+                <span
+                
+                >
+                  
+                </span>
+              </label>
+
+              <input
+                id="title"
+                name="title"
+                type="text"
+                placeholder="For example: Broken street light"
+                value={title}onChange={(event) =>setTitle(event.target.value)
+                }
+                required
+                style={{
+                  outline: "none",
+                  boxShadow: "none",
+                }}
+                onBlur={(event) => {
+                  event.currentTarget.style.borderColor =
+                    "var(--border)";
+                  event.currentTarget.style.boxShadow =
+                    "none";
+                }}
+              />
+            </div>
+
+            {/* DESCRIPTION */}
+            <div style={{ marginBottom: 27 }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: 10,
+                  marginBottom: 6,
+                }}
+              >
+                <label
+                  htmlFor="description"
+                  style={{
+                    marginBottom: 0,
+                  }}
+                >
+                  Description
                 </label>
-                <span style={{ fontSize: 12, color: "#55708e" }}>Optional — AI auto-detects</span>
+
+                <span
+                  style={{
+                    fontSize: 12,
+                    color: "var(--text-muted)",
+                  }}
+                >
+                  {/* {description.length}/500 */}
+                </span>
               </div>
+
+              <textarea
+                id="description"
+                name="description"
+                rows={5}
+                maxLength={500}
+                placeholder="Explain what happened, where it happened, and how it is affecting the community..."
+                value={description}
+                onChange={(event) =>
+                  setDescription(event.target.value)
+                }
+                required
+                style={{
+                  resize: "vertical",
+                  minHeight: 130,
+                  lineHeight: 1.6,
+                  outline: "none",
+                  boxShadow: "none",
+                }}
+                
+                onBlur={(event) => {
+                  event.currentTarget.style.borderColor =
+                    "var(--border)";
+                  event.currentTarget.style.boxShadow =
+                    "none";
+                }}
+              />
+            </div>
+
+            {/* CATEGORY */}
+            <div>
+              <label style={{ marginBottom: 10 }}>
+                Category
+                <span
+                  style={{
+                    color: "#b42318",
+                    marginLeft: 4,
+                  }}
+                >
+                  *
+                </span>
+              </label>
 
               <div
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "repeat(3, 1fr)",
-                  gap: 12,
+                  gridTemplateColumns:
+                    "repeat(auto-fit, minmax(145px, 1fr))",
+                  gap: 10,
                 }}
               >
-                {CATEGORIES.map((cat) => {
-                  const Icon = cat.icon;
-                  const selected = selectedCategory === cat.id;
+                {categories.map((item) => {
+                  const selected =
+                    category === item.name;
+
                   return (
                     <button
-                      key={cat.id}
+                      key={item.name}
                       type="button"
-                      onClick={() => setSelectedCategory(selected ? null : cat.id)}
-                      className="flex flex-col items-center justify-center transition-colors"
+                      onClick={() =>
+                        setCategory(item.name)
+                      }
                       style={{
-                        backgroundColor: "#0c1a2a",
-                        border: selected ? "1px solid #08aeea" : "1px solid #1b344b",
-                        borderRadius: 10,
-                        padding: "16px 12px",
+                        minHeight: 76,
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
                         gap: 8,
+                        padding: "12px 10px",
+                        borderRadius:
+                          "var(--radius-md)",
+                        border: selected
+                          ? "1px solid var(--primary)"
+                          : "1px solid var(--border)",
+                        background: selected
+                          ? "var(--primary-light)"
+                          : "var(--card)",
+                        color: selected
+                          ? "var(--primary)"
+                          : "var(--text-secondary)",
+                        fontFamily: "inherit",
+                        fontSize: 13,
+                        fontWeight: selected
+                          ? 600
+                          : 500,
                         cursor: "pointer",
+                        outline: "none",
+                        boxShadow: "none",
+                        transition:
+                          "all 0.18s ease",
                       }}
                     >
-                      <Icon size={22} color={cat.iconColor} />
-                      <span style={{ fontSize: 13, color: "#c3ceda" }}>{cat.label}</span>
+                      {item.icon}
+
+                      <span>{item.name}</span>
                     </button>
                   );
                 })}
               </div>
             </div>
+          </section>
 
-            {/* UPLOAD PHOTO */}
-            <div style={{ marginTop: 24 }}>
-              <label className="font-semibold" style={{ fontSize: 14, display: "block", marginBottom: 12 }}>
-                Upload Photo
+          {/* =====================================================
+              LOCATION
+          ====================================================== */}
+          <section
+            className="card"
+            style={{
+              padding: 30,
+              marginBottom: 20,
+            }}
+          >
+            {/* SECTION HEADER */}
+            <div
+              style={{
+                marginBottom: 28,
+              }}
+            >
+              <h2
+                style={{
+                  margin: 0,
+                  fontSize: 20,
+                  lineHeight: 1.3,
+                  letterSpacing: "-0.01em",
+                }}
+              >
+                Where is the problem?
+              </h2>
+
+              <p
+                style={{
+                  margin: "6px 0 0",
+                  fontSize: 13,
+                  color: "var(--text-muted)",
+                }}
+              >
+                Your registered location is used automatically.
+              </p>
+            </div>
+
+            {/* REGISTERED LOCATION */}
+            <div
+              style={{
+                padding: 18,
+                borderRadius: "var(--radius-md)",
+                background: "var(--background-secondary)",
+                border: "1px solid var(--border-light)",
+                marginBottom: 22,
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 9,
+                  marginBottom: 14,
+                  color: "var(--text-primary)",
+                  fontSize: 13,
+                  fontWeight: 600,
+                }}
+              >
+                <MapPin
+                  size={17}
+                  color="var(--primary)"
+                />
+
+                Your registered location
+              </div>
+
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  flexWrap: "wrap",
+                  gap: 7,
+                  fontSize: 14,
+                  color: "var(--text-secondary)",
+                }}
+              >
+                <span>Gasabo</span>
+
+                <ChevronRight
+                  size={15}
+                  color="var(--text-muted)"
+                />
+
+                <span>Ndera</span>
+
+                <ChevronRight
+                  size={15}
+                  color="var(--text-muted)"
+                />
+
+                <span>Bwiza</span>
+
+                <ChevronRight
+                  size={15}
+                  color="var(--text-muted)"
+                />
+
+                <strong
+                  style={{
+                    color: "var(--text-primary)",
+                  }}
+                >
+                  Ruhangare
+                </strong>
+              </div>
+            </div>
+
+            {/* SPECIFIC LOCATION */}
+            <div>
+              <label htmlFor="specificLocation">
+                More specific location
+
+                <span
+                  style={{
+                    marginLeft: 6,
+                    fontSize: 12,
+                    fontWeight: 400,
+                    color: "var(--text-muted)",
+                  }}
+                >
+                  Optional
+                </span>
               </label>
 
               <div
-                onClick={() => fileInputRef.current?.click()}
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  setIsDragging(true);
-                }}
-                onDragLeave={() => setIsDragging(false)}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  setIsDragging(false);
-                  handleFile(e.dataTransfer.files?.[0] ?? null);
-                }}
-                className="flex flex-col items-center justify-center"
                 style={{
-                  border: `1px dashed ${isDragging ? "#08aeea" : "#2a3a4c"}`,
-                  borderRadius: 10,
-                  padding: "36px 20px",
-                  cursor: "pointer",
-                  backgroundColor: isDragging ? "#0d1f30" : "transparent",
-                  transition: "background-color 0.15s, border-color 0.15s",
-                }}
-              >
-                <Camera size={28} color="#55708e" />
-                <p style={{ fontSize: 14, color: "#c3ceda", marginTop: 12 }}>
-                  {photoName ? photoName : "Click to upload or drag a photo"}
-                </p>
-                <p style={{ fontSize: 12, color: "#55708e", marginTop: 4 }}>
-                  JPG, PNG, HEIC · max 10MB · AI analyzes image automatically
-                </p>
-              </div>
-
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/heic"
-                onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
-                style={{ display: "none" }}
-              />
-            </div>
-
-            {/* PUBLIC TOGGLE */}
-            <div
-              className="flex items-center justify-between"
-              style={{
-                marginTop: 20,
-                backgroundColor: "#0c1a2a",
-                border: "1px solid #1b344b",
-                borderRadius: 10,
-                padding: "16px 18px",
-              }}
-            >
-              <div>
-                <p className="font-semibold" style={{ fontSize: 14 }}>
-                  Make this report public
-                </p>
-                <p style={{ fontSize: 12, color: "#55708e", marginTop: 3 }}>
-                  Visible on community map to all citizens
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setIsPublic((v) => !v)}
-                aria-pressed={isPublic}
-                style={{
-                  width: 44,
-                  height: 24,
-                  borderRadius: 999,
-                  border: "none",
-                  backgroundColor: isPublic ? "#4f9d78" : "#2a3a4c",
                   position: "relative",
-                  cursor: "pointer",
-                  transition: "background-color 0.15s",
-                  flexShrink: 0,
                 }}
               >
-                <span
+                <MapPin
+                  size={17}
                   style={{
                     position: "absolute",
-                    top: 3,
-                    left: isPublic ? 23 : 3,
-                    width: 18,
-                    height: 18,
-                    borderRadius: "50%",
-                    backgroundColor: "#ffffff",
-                    transition: "left 0.15s",
+                    left: 14,
+                    top: 14,
+                    color: "var(--text-muted)",
                   }}
                 />
-              </button>
-            </div>
 
-            {/* CONTINUE BUTTON */}
-            <button
-              type="button"
-              className="flex items-center justify-center font-bold w-full transition-colors"
+                <input
+                  id="specificLocation"
+                  name="specificLocation"
+                  type="text"
+                  placeholder="Example: Near the primary school"
+                  value={specificLocation}
+                  onChange={(event) =>
+                    setSpecificLocation(
+                      event.target.value,
+                    )
+                  }
+                  style={{
+                    paddingLeft: 42,
+                    outline: "none",
+                    boxShadow: "none",
+                  }}
+                  
+                  onBlur={(event) => {
+                    event.currentTarget.style.borderColor =
+                      "var(--border)";
+                    event.currentTarget.style.boxShadow =
+                      "none";
+                  }}
+                />
+              </div>
+
+              <p
+                style={{
+                  marginTop: 7,
+                  marginBottom: 0,
+                  fontSize: 12,
+                  color: "var(--text-muted)",
+                }}
+              >
+                Add a nearby landmark to help the responsible
+                team find the problem easily.
+              </p>
+            </div>
+          </section>
+
+          {/* =====================================================
+              PHOTO
+          ====================================================== */}
+          <section
+            className="card"
+            style={{
+              padding: 30,
+              marginBottom: 20,
+            }}
+          >
+            {/* SECTION HEADER */}
+            <div
               style={{
-                marginTop: 24,
-                height: 52,
-                borderRadius: 10,
-                background: "linear-gradient(90deg, #08aeea 0%, #0798cc 100%)",
-                color: "#ffffff",
-                fontSize: 15,
-                gap: 8,
-                border: "none",
-                cursor: "pointer",
+                marginBottom: 25,
               }}
             >
-              Continue — Set Location
-              <ArrowRight size={16} strokeWidth={2.5} />
-            </button>
-          </div>
+              <h2
+                style={{
+                  margin: 0,
+                  fontSize: 20,
+                  lineHeight: 1.3,
+                  letterSpacing: "-0.01em",
+                }}
+              >
+                Add a photo
+              </h2>
 
-          {/* RIGHT: LIVE AI ANALYSIS */}
-          <div style={{ flex: 1, position: "sticky", top: 24 }}>
-            <div
-              className="rounded-[12px] border border-[#1b344b]"
-              style={{ backgroundColor: "#0c1a2a", overflow: "hidden" }}
+              <p
+                style={{
+                  margin: "6px 0 0",
+                  fontSize: 13,
+                  color: "var(--text-muted)",
+                }}
+              >
+                A photo can help us understand the problem better.
+              </p>
+            </div>
+
+            <label
+              htmlFor="photo"
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                minHeight: 190,
+                padding: 25,
+                borderRadius: "var(--radius-lg)",
+                border: "1.5px dashed var(--border)",
+                background: "var(--background-secondary)",
+                cursor: "pointer",
+                textAlign: "center",
+              }}
             >
               <div
-                className="flex items-center justify-between"
-                style={{ padding: "16px 18px", borderBottom: "1px solid #1b344b" }}
+                style={{
+                  width: 48,
+                  height: 48,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderRadius: 14,
+                  background: "var(--primary-light)",
+                  color: "var(--primary)",
+                  marginBottom: 13,
+                }}
               >
-                <div className="flex items-center" style={{ gap: 8 }}>
-                  <span
-                    style={{
-                      width: 7,
-                      height: 7,
-                      borderRadius: "50%",
-                      backgroundColor: aiActive ? "#4f9d78" : "#55708e",
-                    }}
-                  />
-                  <span className="font-semibold" style={{ fontSize: 14 }}>
-                    Live AI Analysis
-                  </span>
-                </div>
-                {!aiActive && (
-                  <span style={{ fontSize: 11, color: "#55708e", fontFamily: "monospace" }}>
-                    {charsLeftForAI}+ chars to activate
-                  </span>
-                )}
+                <Camera size={22} />
               </div>
 
+              <span
+                style={{
+                  color: "var(--text-primary)",
+                  fontSize: 14,
+                  fontWeight: 600,
+                }}
+              >
+                {photo
+                  ? photo.name
+                  : "Choose a photo"}
+              </span>
+
+              <span
+                style={{
+                  marginTop: 6,
+                  color: "var(--text-muted)",
+                  fontSize: 12,
+                }}
+              >
+                JPG, PNG or HEIC · Maximum 10MB
+              </span>
+
+              <input
+                id="photo"
+                name="photo"
+                type="file"
+                accept="image/jpeg,image/png,image/heic"
+                onChange={handlePhotoChange}
+                style={{
+                  display: "none",
+                }}
+              />
+            </label>
+          </section>
+
+          {/* =====================================================
+              PUBLIC REPORT
+          ====================================================== */}
+          <section
+            className="card"
+            style={{
+              padding: "20px 22px",
+              marginBottom: 28,
+            }}
+          >
+            <button
+              type="button"
+              onClick={() =>
+                setIsPublic((previous) => !previous)
+              }
+              style={{
+                width: "100%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 20,
+                border: "none",
+                background: "transparent",
+                padding: 0,
+                textAlign: "left",
+                fontFamily: "inherit",
+                cursor: "pointer",
+                outline: "none",
+                boxShadow: "none",
+              }}
+            >
               <div
-                className="flex flex-col items-center text-center"
-                style={{ padding: "40px 24px" }}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 13,
+                }}
               >
                 <div
-                  className="flex items-center justify-center"
                   style={{
-                    width: 56,
-                    height: 56,
-                    borderRadius: "50%",
-                    backgroundColor: "#132335",
-                    marginBottom: 20,
+                    width: 38,
+                    height: 38,
+                    flexShrink: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderRadius: 11,
+                    background:
+                      "var(--background-secondary)",
+                    color: "var(--text-secondary)",
                   }}
                 >
-                  <Bot size={28} color="#5b8fc7" />
+                  <FileText size={18} />
                 </div>
-                <p style={{ fontSize: 13, color: "#8a97a8", lineHeight: 1.6 }}>
-                  AI instantly classifies category, assigns priority, detects duplicates, and
-                  identifies the responsible organization as you type.
-                </p>
+
+                <div>
+                  <div
+                    style={{
+                      color: "var(--text-primary)",
+                      fontSize: 14,
+                      fontWeight: 600,
+                    }}
+                  >
+                    Make this report public
+                  </div>
+
+                  <div
+                    style={{
+                      marginTop: 3,
+                      color: "var(--text-muted)",
+                      fontSize: 12,
+                    }}
+                  >
+                    Allow other citizens to see this report
+                  </div>
+                </div>
               </div>
+
+              {/* SWITCH */}
+              <div
+                style={{
+                  width: 46,
+                  height: 26,
+                  flexShrink: 0,
+                  padding: 3,
+                  borderRadius: 999,
+                  background: isPublic
+                    ? "var(--primary)"
+                    : "#cbd5e1",
+                  transition:
+                    "background-color 0.2s ease",
+                }}
+              >
+                <div
+                  style={{
+                    width: 20,
+                    height: 20,
+                    borderRadius: "50%",
+                    background: "#ffffff",
+                    transform: isPublic
+                      ? "translateX(20px)"
+                      : "translateX(0)",
+                    transition:
+                      "transform 0.2s ease",
+                    boxShadow:
+                      "0 1px 3px rgba(0,0,0,0.15)",
+                  }}
+                />
+              </div>
+            </button>
+          </section>
+
+          {/* =====================================================
+              BOTTOM ACTIONS
+          ====================================================== */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 20,
+              flexWrap: "wrap",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 7,
+                color: "var(--text-muted)",
+                fontSize: 12,
+              }}
+            >
+              <Check
+                size={15}
+                color="var(--primary)"
+              />
+
+              You can track your report after submitting
             </div>
+
+            <button
+              type="submit"
+              className="btn-primary"
+              disabled={
+                !title ||
+                !description ||
+                !category
+              }
+              style={{
+                minHeight: 48,
+                padding: "0 22px",
+                gap: 9,
+                outline: "none",
+              }}
+            >
+              Submit Report
+              <Send size={17} />
+            </button>
           </div>
-        </div>
+        </form>
       </div>
-    </div>
+    </main>
   );
 }
