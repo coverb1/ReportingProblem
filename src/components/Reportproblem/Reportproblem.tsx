@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -18,6 +18,7 @@ import {
   Trash2,
   Waves,
 } from "lucide-react";
+import { useRouter } from 'next/navigation';
 
 type Category = {
   name: string;
@@ -58,6 +59,7 @@ export default function ReportProblemPage() {
   const [specificLocation, setSpecificLocation] = useState("");
   const [isPublic, setIsPublic] = useState(true);
   const [photo, setPhoto] = useState<File | null>(null);
+  const router=useRouter()
 
   const handlePhotoChange = (
     event: React.ChangeEvent<HTMLInputElement>,
@@ -81,6 +83,18 @@ export default function ReportProblemPage() {
       photo,
     });
   };
+
+
+useEffect(()=>{
+  const Token=localStorage.getItem('token')
+  console.log("token gotten well")
+  
+if (!Token) {
+router.push('/auth/login/');
+}
+},[])
+
+
 
   return (
     <main
@@ -124,17 +138,6 @@ export default function ReportProblemPage() {
             <ArrowLeft size={17} />
             Back to home
           </Link>
-
-          <div
-            style={{
-              color: "var(--primary)",
-              fontSize: 21,
-              fontWeight: 800,
-              letterSpacing: "-0.4px",
-            }}
-          >
-            RCPMS
-          </div>
         </div>
       </div>
 
@@ -166,7 +169,7 @@ export default function ReportProblemPage() {
               marginBottom: 13,
             }}
           >
-            <MessageSquare size={16} />
+            
             Community report
           </div>
 
