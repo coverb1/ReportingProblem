@@ -2,24 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import {
-  ArrowLeft,
-  Camera,
-  Check,
-  ChevronRight,
-  Droplets,
-  FileText,
-  Lightbulb,
-  MapPin,
-  MessageSquare,
-  Recycle,
-  Road,
-  Send,
-  Trash2,
-  Waves,
-} from "lucide-react";
+import {ArrowLeft,Camera,Check,ChevronRight,Droplets,FileText,Lightbulb,MapPin,MessageSquare,Recycle,Road,Send,Trash2, Waves,} from "lucide-react";
 import { useRouter } from 'next/navigation';
-
 type Category = {
   name: string;
   icon: React.ReactNode;
