@@ -1,8 +1,7 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import {ArrowLeft,Camera,Check,ChevronRight,Droplets,FileText,Lightbulb,MapPin,MessageSquare,Recycle,Road,Send,Trash2, Waves,} from "lucide-react";
+import {ArrowLeft,Camera,Check,ChevronRight,Droplets,FileText,Lightbulb,MapPin,MessageSquare,Recycle,Road,Send,Trash2, Waves} from "lucide-react";
 import { useRouter } from 'next/navigation';
 type Category = {
   name: string;
@@ -56,7 +55,6 @@ export default function ReportProblemPage() {
     event: React.FormEvent<HTMLFormElement>,
   ) => {
     event.preventDefault();
-
     // Backend submission will be connected later.
     console.log({
       title,
@@ -68,17 +66,12 @@ export default function ReportProblemPage() {
     });
   };
 
-
 useEffect(()=>{
   const Token=localStorage.getItem('token')
   console.log("token gotten well")
   
 if (!Token) {
-router.push('/auth/login/');
-}
-},[])
-
-
+router.push('/auth/login/');}},[])
 
   return (
     <main
@@ -86,11 +79,7 @@ router.push('/auth/login/');
         minHeight: "100vh",
         background: "var(--background-secondary)",
         paddingBottom: 80,
-      }}
-    >
-      {/* =====================================================
-          HEADER
-      ====================================================== */}
+      }}>
       <div
         style={{
           borderBottom: "1px solid var(--border-light)",
