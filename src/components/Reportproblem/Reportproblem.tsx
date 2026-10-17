@@ -1,85 +1,91 @@
+
 "use client";
-import { useEffect, useState } from "react";
+
 import Link from "next/link";
-import {ArrowLeft,Camera,Check,ChevronRight,Droplets,FileText,Lightbulb,MapPin,MessageSquare,Recycle,Road,Send,Trash2, Waves} from "lucide-react";
-import { useRouter } from 'next/navigation';
+import { ArrowLeft, Camera, Check, ChevronRight, Droplets, FileText, Lightbulb, MapPin, Recycle, Road, Send, Trash2, Waves, } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import router, { useRouter } from "next/router";
+import axios from "axios";
+
 type Category = {
   name: string;
   icon: React.ReactNode;
 };
 
 const categories: Category[] = [
-  {
-    name: "Roads",
-    icon: <Road size={20} strokeWidth={1.8} />,
-  },
-  {
-    name: "Water",
-    icon: <Droplets size={20} strokeWidth={1.8} />,
-  },
+  { name: "Roads", icon: <Road size={20} strokeWidth={1.8} /> },
+  { name: "Water", icon: <Droplets size={20} strokeWidth={1.8} /> },
   {
     name: "Street Lighting",
     icon: <Lightbulb size={20} strokeWidth={1.8} />,
   },
-  {
-    name: "Waste",
-    icon: <Recycle size={20} strokeWidth={1.8} />,
-  },
-  {
-    name: "Drainage",
-    icon: <Waves size={20} strokeWidth={1.8} />,
-  },
+  { name: "Waste", icon: <Recycle size={20} strokeWidth={1.8} /> },
+  { name: "Drainage", icon: <Waves size={20} strokeWidth={1.8} /> },
   {
     name: "Public Infrastructure",
     icon: <Trash2 size={20} strokeWidth={1.8} />,
   },
 ];
-
 export default function ReportProblemPage() {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [category, setCategory] = useState("");
+
+  const [title, setTitle] = useState("")
+  const [description, setDescription] = useState("")
+  const [Categories, setCategories] = useState<Category[]>([])
   const [specificLocation, setSpecificLocation] = useState("");
   const [isPublic, setIsPublic] = useState(true);
   const [photo, setPhoto] = useState<File | null>(null);
-  const router=useRouter()
 
   const handlePhotoChange = (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
+    event: React.ChangeEvent<HTMLInputElement>,) => {
     const file = event.target.files?.[0] ?? null;
     setPhoto(file);
   };
 
   const handleSubmit = (
-    event: React.FormEvent<HTMLFormElement>,
+    event: React.FormEvent<HTMLFormElement>
   ) => {
     event.preventDefault();
-    // Backend submission will be connected later.
-    console.log({
-      title,
-      description,
-      category,
-      specificLocation,
-      isPublic,
-      photo,
-    });
-  };
+
+    const formData = new FormData();
+    formData.append("title", title)
+    formData.append("description", description)
+    // formData.append("Category", Category)
+    formData.append("specificLocation", specificLocation)
+    formData.append("isPublic", String(isPublic))
+    formData.append("description", description)
+    formData.append("photo", String(photo))
+    const router = useRouter()
+
+    return formData
+  }
+
+// get vategory
 
 useEffect(()=>{
-  const Token=localStorage.getItem('token')
-  console.log("token gotten well")
-  
-if (!Token) {
-router.push('/auth/login/');}},[])
+try {
+    const fetchCategory=async()=>{
+    const  responce=await axios.get("http://localhost:3000/categories",)
+    setCategories(responce.data)
+  }
+} catch (error) {
+  console.log("failed to fetch categories",error)
+}
+})
+
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    console.log(token)
+
+    if (!token) {
+router.push('/auth/login/')
+    }
+
+  }, [])
 
   return (
     <main
-      style={{
-        minHeight: "100vh",
-        background: "var(--background-secondary)",
-        paddingBottom: 80,
-      }}>
+      style={{ minHeight: "100vh",background: "var(--background-secondary)",paddingBottom: 80,}}>
+      {/* HEADER */}
       <div
         style={{
           borderBottom: "1px solid var(--border-light)",
@@ -114,23 +120,12 @@ router.push('/auth/login/');}},[])
         </div>
       </div>
 
-      {/* =====================================================
-          PAGE CONTENT
-      ====================================================== */}
       <div
         className="container"
-        style={{
-          maxWidth: 980,
-          paddingTop: 52,
-        }}
+        style={{ maxWidth: 980, paddingTop: 52 }}
       >
         {/* PAGE INTRO */}
-        <div
-          style={{
-            maxWidth: 680,
-            marginBottom: 34,
-          }}
-        >
+        <div style={{ maxWidth: 680, marginBottom: 34 }}>
           <div
             style={{
               display: "inline-flex",
@@ -142,7 +137,6 @@ router.push('/auth/login/');}},[])
               marginBottom: 13,
             }}
           >
-            
             Community report
           </div>
 
@@ -174,22 +168,12 @@ router.push('/auth/login/');}},[])
         </div>
 
         <form>
-          {/* =====================================================
-              PROBLEM DETAILS
-          ====================================================== */}
+          {/* PROBLEM DETAILS */}
           <section
             className="card"
-            style={{
-              padding: 30,
-              marginBottom: 20,
-            }}
+            style={{ padding: 30, marginBottom: 20 }}
           >
-            {/* SECTION HEADER */}
-            <div
-              style={{
-                marginBottom: 28,
-              }}
-            >
+            <div style={{ marginBottom: 28 }}>
               <h2
                 style={{
                   margin: 0,
@@ -214,90 +198,37 @@ router.push('/auth/login/');}},[])
 
             {/* TITLE */}
             <div style={{ marginBottom: 23 }}>
-              <label htmlFor="title">
-                Problem title
-                <span
-                
-                >
-                  
-                </span>
-              </label>
+              <label htmlFor="title">Problem title</label>
 
               <input
                 id="title"
                 name="title"
                 type="text"
                 placeholder="For example: Broken street light"
-                value={title}onChange={(event) =>setTitle(event.target.value)
-                }
-                required
-                style={{
-                  outline: "none",
-                  boxShadow: "none",
-                }}
-                onBlur={(event) => {
-                  event.currentTarget.style.borderColor =
-                    "var(--border)";
-                  event.currentTarget.style.boxShadow =
-                    "none";
-                }}
+                value={title}
+                onChange={(event)=>setTitle(event.target.value)}
+                style={{ outline: "none", boxShadow: "none" }}
               />
             </div>
 
             {/* DESCRIPTION */}
             <div style={{ marginBottom: 27 }}>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: 10,
-                  marginBottom: 6,
-                }}
-              >
-                <label
-                  htmlFor="description"
-                  style={{
-                    marginBottom: 0,
-                  }}
-                >
-                  Description
-                </label>
-
-                <span
-                  style={{
-                    fontSize: 12,
-                    color: "var(--text-muted)",
-                  }}
-                >
-                  {/* {description.length}/500 */}
-                </span>
-              </div>
+              <label htmlFor="description">Description</label>
 
               <textarea
                 id="description"
                 name="description"
                 rows={5}
                 maxLength={500}
-                placeholder="Explain what happened, where it happened, and how it is affecting the community..."
                 value={description}
-                onChange={(event) =>
-                  setDescription(event.target.value)
-                }
-                required
+                onChange={(event)=>setDescription(event.target.value)}
+                placeholder="Explain what happened, where it happened, and how it is affecting the community..."
                 style={{
                   resize: "vertical",
                   minHeight: 130,
                   lineHeight: 1.6,
                   outline: "none",
                   boxShadow: "none",
-                }}
-                
-                onBlur={(event) => {
-                  event.currentTarget.style.borderColor =
-                    "var(--border)";
-                  event.currentTarget.style.boxShadow =
-                    "none";
                 }}
               />
             </div>
@@ -306,12 +237,7 @@ router.push('/auth/login/');}},[])
             <div>
               <label style={{ marginBottom: 10 }}>
                 Category
-                <span
-                  style={{
-                    color: "#b42318",
-                    marginLeft: 4,
-                  }}
-                >
+                <span style={{ color: "#b42318", marginLeft: 4 }}>
                   *
                 </span>
               </label>
@@ -324,74 +250,45 @@ router.push('/auth/login/');}},[])
                   gap: 10,
                 }}
               >
-                {categories.map((item) => {
-                  const selected =
-                    category === item.name;
-
-                  return (
-                    <button
-                      key={item.name}
-                      type="button"
-                      onClick={() =>
-                        setCategory(item.name)
-                      }
-                      style={{
-                        minHeight: 76,
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: 8,
-                        padding: "12px 10px",
-                        borderRadius:
-                          "var(--radius-md)",
-                        border: selected
-                          ? "1px solid var(--primary)"
-                          : "1px solid var(--border)",
-                        background: selected
-                          ? "var(--primary-light)"
-                          : "var(--card)",
-                        color: selected
-                          ? "var(--primary)"
-                          : "var(--text-secondary)",
-                        fontFamily: "inherit",
-                        fontSize: 13,
-                        fontWeight: selected
-                          ? 600
-                          : 500,
-                        cursor: "pointer",
-                        outline: "none",
-                        boxShadow: "none",
-                        transition:
-                          "all 0.18s ease",
-                      }}
-                    >
-                      {item.icon}
-
-                      <span>{item.name}</span>
-                    </button>
-                  );
-                })}
+                {categories.map((item) => (
+                  <button
+                    key={item.name}
+                    type="button"
+                    style={{
+                      minHeight: 76,
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 8,
+                      padding: "12px 10px",
+                      borderRadius: "var(--radius-md)",
+                      border: "1px solid var(--border)",
+                      background: "var(--card)",
+                      color: "var(--text-secondary)",
+                      fontFamily: "inherit",
+                      fontSize: 13,
+                      fontWeight: 500,
+                      cursor: "pointer",
+                      outline: "none",
+                      boxShadow: "none",
+                      transition: "all 0.18s ease",
+                    }}
+                  >
+                    {item.icon}
+                    <span>{item.name}</span>
+                  </button>
+                ))}
               </div>
             </div>
           </section>
 
-          {/* =====================================================
-              LOCATION
-          ====================================================== */}
+          {/* LOCATION */}
           <section
             className="card"
-            style={{
-              padding: 30,
-              marginBottom: 20,
-            }}
+            style={{ padding: 30, marginBottom: 20 }}
           >
-            {/* SECTION HEADER */}
-            <div
-              style={{
-                marginBottom: 28,
-              }}
-            >
+            <div style={{ marginBottom: 28 }}>
               <h2
                 style={{
                   margin: 0,
@@ -435,11 +332,7 @@ router.push('/auth/login/');}},[])
                   fontWeight: 600,
                 }}
               >
-                <MapPin
-                  size={17}
-                  color="var(--primary)"
-                />
-
+                <MapPin size={17} color="var(--primary)" />
                 Your registered location
               </div>
 
@@ -454,31 +347,13 @@ router.push('/auth/login/');}},[])
                 }}
               >
                 <span>Gasabo</span>
-
-                <ChevronRight
-                  size={15}
-                  color="var(--text-muted)"
-                />
-
+                <ChevronRight size={15} color="var(--text-muted)" />
                 <span>Ndera</span>
-
-                <ChevronRight
-                  size={15}
-                  color="var(--text-muted)"
-                />
-
+                <ChevronRight size={15} color="var(--text-muted)" />
                 <span>Bwiza</span>
+                <ChevronRight size={15} color="var(--text-muted)" />
 
-                <ChevronRight
-                  size={15}
-                  color="var(--text-muted)"
-                />
-
-                <strong
-                  style={{
-                    color: "var(--text-primary)",
-                  }}
-                >
+                <strong style={{ color: "var(--text-primary)" }}>
                   Ruhangare
                 </strong>
               </div>
@@ -488,7 +363,6 @@ router.push('/auth/login/');}},[])
             <div>
               <label htmlFor="specificLocation">
                 More specific location
-
                 <span
                   style={{
                     marginLeft: 6,
@@ -501,11 +375,7 @@ router.push('/auth/login/');}},[])
                 </span>
               </label>
 
-              <div
-                style={{
-                  position: "relative",
-                }}
-              >
+              <div style={{ position: "relative" }}>
                 <MapPin
                   size={17}
                   style={{
@@ -521,23 +391,10 @@ router.push('/auth/login/');}},[])
                   name="specificLocation"
                   type="text"
                   placeholder="Example: Near the primary school"
-                  value={specificLocation}
-                  onChange={(event) =>
-                    setSpecificLocation(
-                      event.target.value,
-                    )
-                  }
                   style={{
                     paddingLeft: 42,
                     outline: "none",
                     boxShadow: "none",
-                  }}
-                  
-                  onBlur={(event) => {
-                    event.currentTarget.style.borderColor =
-                      "var(--border)";
-                    event.currentTarget.style.boxShadow =
-                      "none";
                   }}
                 />
               </div>
@@ -556,22 +413,12 @@ router.push('/auth/login/');}},[])
             </div>
           </section>
 
-          {/* =====================================================
-              PHOTO
-          ====================================================== */}
+          {/* PHOTO */}
           <section
             className="card"
-            style={{
-              padding: 30,
-              marginBottom: 20,
-            }}
+            style={{ padding: 30, marginBottom: 20 }}
           >
-            {/* SECTION HEADER */}
-            <div
-              style={{
-                marginBottom: 25,
-              }}
-            >
+            <div style={{ marginBottom: 25 }}>
               <h2
                 style={{
                   margin: 0,
@@ -633,9 +480,7 @@ router.push('/auth/login/');}},[])
                   fontWeight: 600,
                 }}
               >
-                {photo
-                  ? photo.name
-                  : "Choose a photo"}
+                Choose a photo
               </span>
 
               <span
@@ -653,17 +498,12 @@ router.push('/auth/login/');}},[])
                 name="photo"
                 type="file"
                 accept="image/jpeg,image/png,image/heic"
-                onChange={handlePhotoChange}
-                style={{
-                  display: "none",
-                }}
+                style={{ display: "none" }}
               />
             </label>
           </section>
 
-          {/* =====================================================
-              PUBLIC REPORT
-          ====================================================== */}
+          {/* PUBLIC REPORT */}
           <section
             className="card"
             style={{
@@ -671,25 +511,13 @@ router.push('/auth/login/');}},[])
               marginBottom: 28,
             }}
           >
-            <button
-              type="button"
-              onClick={() =>
-                setIsPublic((previous) => !previous)
-              }
+            <div
               style={{
                 width: "100%",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
                 gap: 20,
-                border: "none",
-                background: "transparent",
-                padding: 0,
-                textAlign: "left",
-                fontFamily: "inherit",
-                cursor: "pointer",
-                outline: "none",
-                boxShadow: "none",
               }}
             >
               <div
@@ -708,8 +536,7 @@ router.push('/auth/login/');}},[])
                     alignItems: "center",
                     justifyContent: "center",
                     borderRadius: 11,
-                    background:
-                      "var(--background-secondary)",
+                    background: "var(--background-secondary)",
                     color: "var(--text-secondary)",
                   }}
                 >
@@ -739,7 +566,7 @@ router.push('/auth/login/');}},[])
                 </div>
               </div>
 
-              {/* SWITCH */}
+              {/* STATIC SWITCH DESIGN */}
               <div
                 style={{
                   width: 46,
@@ -747,11 +574,7 @@ router.push('/auth/login/');}},[])
                   flexShrink: 0,
                   padding: 3,
                   borderRadius: 999,
-                  background: isPublic
-                    ? "var(--primary)"
-                    : "#cbd5e1",
-                  transition:
-                    "background-color 0.2s ease",
+                  background: "var(--primary)",
                 }}
               >
                 <div
@@ -760,22 +583,15 @@ router.push('/auth/login/');}},[])
                     height: 20,
                     borderRadius: "50%",
                     background: "#ffffff",
-                    transform: isPublic
-                      ? "translateX(20px)"
-                      : "translateX(0)",
-                    transition:
-                      "transform 0.2s ease",
-                    boxShadow:
-                      "0 1px 3px rgba(0,0,0,0.15)",
+                    transform: "translateX(20px)",
+                    boxShadow: "0 1px 3px rgba(0,0,0,0.15)",
                   }}
                 />
               </div>
-            </button>
+            </div>
           </section>
 
-          {/* =====================================================
-              BOTTOM ACTIONS
-          ====================================================== */}
+          {/* BOTTOM ACTIONS */}
           <div
             style={{
               display: "flex",
@@ -794,22 +610,13 @@ router.push('/auth/login/');}},[])
                 fontSize: 12,
               }}
             >
-              <Check
-                size={15}
-                color="var(--primary)"
-              />
-
+              <Check size={15} color="var(--primary)" />
               You can track your report after submitting
             </div>
 
             <button
-              type="submit"
+              type="button"
               className="btn-primary"
-              disabled={
-                !title ||
-                !description ||
-                !category
-              }
               style={{
                 minHeight: 48,
                 padding: "0 22px",
