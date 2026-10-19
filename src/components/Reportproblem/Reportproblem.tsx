@@ -1,125 +1,259 @@
 
 "use client";
 
-import Link from "next/link";
-import { ArrowLeft, Camera, Check, ChevronRight, Droplets, FileText, Lightbulb, MapPin, Recycle, Road, Send, Trash2, Waves, } from "lucide-react";
+import {
+  Camera,
+  Droplets,
+  Lightbulb,
+  MapPin,
+  Recycle,
+  Road,
+  Send,
+  Trash2,
+  Waves,
+} from "lucide-react";
 import React, { useEffect, useState } from "react";
-import router, { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 import axios from "axios";
 
 type Category = {
   name: string;
+  value: string;
   icon: React.ReactNode;
 };
 
 const categories: Category[] = [
-  { name: "Roads", icon: <Road size={20} strokeWidth={1.8} /> },
-  { name: "Water", icon: <Droplets size={20} strokeWidth={1.8} /> },
+  { name: "Roads", value: "ROADS", icon: <Road size={20} strokeWidth={1.8} /> },
+  { name: "Water", value: "WATER", icon: <Droplets size={20} strokeWidth={1.8} /> },
   {
     name: "Street Lighting",
+    value: "STREET_LIGHTING",
     icon: <Lightbulb size={20} strokeWidth={1.8} />,
   },
-  { name: "Waste", icon: <Recycle size={20} strokeWidth={1.8} /> },
-  { name: "Drainage", icon: <Waves size={20} strokeWidth={1.8} /> },
+  { name: "Waste", value: "WASTE", icon: <Recycle size={20} strokeWidth={1.8} /> },
+  { name: "Drainage", value: "DRAINAGE", icon: <Waves size={20} strokeWidth={1.8} /> },
   {
     name: "Public Infrastructure",
+    value: "PUBLIC_INFRASTRUCTURE",
     icon: <Trash2 size={20} strokeWidth={1.8} />,
   },
 ];
+
+type UserLocation = {
+  district: string;
+  sector: string;
+  cell: string;
+  village: string;
+};
+
+function getLocationName(value: unknown): string {
+  if (typeof value === "string") return value;
+
+  if (value && typeof value === "object" && "name" in value) {
+    const name = (value as { name?: unknown }).name;
+    return typeof name === "string" ? name : "";
+  }
+
+  return "";
+}
+
 export default function ReportProblemPage() {
+  const router = useRouter();
 
-  const [title, setTitle] = useState("")
-  const [description, setDescription] = useState("")
-  const [Categories, setCategories] = useState<Category[]>([])
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
   const [specificLocation, setSpecificLocation] = useState("");
-  const [isPublic, setIsPublic] = useState(true);
+  const [isPublic] = useState(true);
   const [photo, setPhoto] = useState<File | null>(null);
+  const [token, setToken] = useState<string | null>(null);
 
+  const [user, setUser] = useState<UserLocation>({
+    district: "",
+    sector: "",
+    cell: "",
+    village: "",
+  });
+
+  const [loadingUser, setLoadingUser] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+
+  // Get the login token and the current user's location.
+  useEffect(() => {
+    const savedToken = localStorage.getItem("token");
+
+    if (!savedToken) {
+      router.push("/auth/login/");
+      return;
+    }
+
+    setToken(savedToken);
+
+    const getCurrentUser = async () => {
+      try {
+        const response = await axios.get(
+          "http://localhost:3000/auth/me",
+          {
+            headers: {
+              Authorization: `Bearer ${savedToken}`,
+            },
+          }
+        );
+
+        console.log("Current user:", response.data);
+
+        setUser({
+          district: getLocationName(response.data.district),
+          sector: getLocationName(response.data.sector),
+          cell: getLocationName(response.data.cell),
+          village: getLocationName(response.data.village),
+        });
+      } catch (error) {
+        console.error("Failed to get current user:", error);
+        setErrorMessage("Could not load your registered location.");
+      } finally {
+        setLoadingUser(false);
+      }
+    };
+
+    getCurrentUser();
+  }, [router]);
+
+  // Save the selected image.
   const handlePhotoChange = (
-    event: React.ChangeEvent<HTMLInputElement>,) => {
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = event.target.files?.[0] ?? null;
+
+    setErrorMessage("");
+    setSuccessMessage("");
+
+    if (!file) {
+      setPhoto(null);
+      return;
+    }
+
+    const allowedTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
+      setErrorMessage("Please choose a JPG, PNG, or WebP image.");
+      event.target.value = "";
+      setPhoto(null);
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      setErrorMessage("The image must be 10MB or smaller.");
+      event.target.value = "";
+      setPhoto(null);
+      return;
+    }
+
     setPhoto(file);
   };
 
-  const handleSubmit = (
+  // Submit the report to NestJS.
+  const handleSubmit = async (
     event: React.FormEvent<HTMLFormElement>
   ) => {
     event.preventDefault();
 
-    const formData = new FormData();
-    formData.append("title", title)
-    formData.append("description", description)
-    // formData.append("Category", Category)
-    formData.append("specificLocation", specificLocation)
-    formData.append("isPublic", String(isPublic))
-    formData.append("description", description)
-    formData.append("photo", String(photo))
-    const router = useRouter()
-
-    return formData
-  }
-
-// get vategory
-
-useEffect(()=>{
-try {
-    const fetchCategory=async()=>{
-    const  responce=await axios.get("http://localhost:3000/categories",)
-    setCategories(responce.data)
-  }
-} catch (error) {
-  console.log("failed to fetch categories",error)
-}
-})
-
-  useEffect(() => {
-    const token = localStorage.getItem('token')
-    console.log(token)
+    setErrorMessage("");
+    setSuccessMessage("");
 
     if (!token) {
-router.push('/auth/login/')
+      setErrorMessage("Please log in before submitting a report.");
+      router.push("/auth/login/");
+      return;
     }
 
-  }, [])
+    if (!title.trim() || !description.trim()) {
+      setErrorMessage("Please enter a title and description.");
+      return;
+    }
+
+    if (!selectedCategory) {
+      setErrorMessage("Please select a category.");
+      return;
+    }
+
+    setSubmitting(true);
+
+    try {
+      const formData = new FormData();
+
+      formData.append("title", title.trim());
+      formData.append("description", description.trim());
+      formData.append("category", selectedCategory);
+      formData.append("specificLocation", specificLocation.trim());
+      formData.append("isPublic", String(isPublic));
+
+      // Send the real image file, not String(photo).
+      if (photo) {
+        formData.append("photo", photo);
+      }
+
+      const response = await axios.post(
+        "http://localhost:3000/report-problem/ReportProblem",
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      console.log("Report created:", response.data);
+
+      setSuccessMessage("Your report was submitted successfully!");
+      setTitle("");
+      setDescription("");
+      setSelectedCategory("");
+      setSpecificLocation("");
+      setPhoto(null);
+
+      const fileInput = document.getElementById(
+        "photo"
+      ) as HTMLInputElement | null;
+
+      if (fileInput) {
+        fileInput.value = "";
+      }
+    } catch (error) {
+      console.error("Failed to submit report:", error);
+
+      if (axios.isAxiosError(error)) {
+        const message = error.response?.data?.message;
+
+        setErrorMessage(
+          Array.isArray(message)
+            ? message.join(", ")
+            : typeof message === "string"
+              ? message
+              : "Failed to submit your report. Please try again."
+        );
+      } else {
+        setErrorMessage("Something went wrong. Please try again.");
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <main
-      style={{ minHeight: "100vh",background: "var(--background-secondary)",paddingBottom: 80,}}>
-      {/* HEADER */}
-      <div
-        style={{
-          borderBottom: "1px solid var(--border-light)",
-          background: "var(--card)",
-        }}
-      >
-        <div
-          className="container"
-          style={{
-            minHeight: 72,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 20,
-          }}
-        >
-          <Link
-            href="/"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 9,
-              color: "var(--text-secondary)",
-              fontSize: 14,
-              fontWeight: 500,
-              textDecoration: "none",
-            }}
-          >
-            <ArrowLeft size={17} />
-            Back to home
-          </Link>
-        </div>
-      </div>
-
+      style={{
+        minHeight: "100vh",
+        background: "var(--background-secondary)",
+        paddingBottom: 80,
+      }}
+    >
       <div
         className="container"
         style={{ maxWidth: 980, paddingTop: 52 }}
@@ -167,7 +301,7 @@ router.push('/auth/login/')
           </p>
         </div>
 
-        <form>
+        <form onSubmit={handleSubmit}>
           {/* PROBLEM DETAILS */}
           <section
             className="card"
@@ -204,9 +338,10 @@ router.push('/auth/login/')
                 id="title"
                 name="title"
                 type="text"
-                placeholder="For example: Broken street light"
+                required
                 value={title}
-                onChange={(event)=>setTitle(event.target.value)}
+                onChange={(event) => setTitle(event.target.value)}
+                placeholder="For example: Broken street light"
                 style={{ outline: "none", boxShadow: "none" }}
               />
             </div>
@@ -220,9 +355,10 @@ router.push('/auth/login/')
                 name="description"
                 rows={5}
                 maxLength={500}
+                required
                 value={description}
-                onChange={(event)=>setDescription(event.target.value)}
-                placeholder="Explain what happened, where it happened, and how it is affecting the community..."
+                onChange={(event) => setDescription(event.target.value)}
+                placeholder="Explain what happened, where it happened, and how it affects the community..."
                 style={{
                   resize: "vertical",
                   minHeight: 130,
@@ -235,7 +371,7 @@ router.push('/auth/login/')
 
             {/* CATEGORY */}
             <div>
-              <label style={{ marginBottom: 10 }}>
+              <label style={{ display: "block", marginBottom: 10 }}>
                 Category
                 <span style={{ color: "#b42318", marginLeft: 4 }}>
                   *
@@ -252,8 +388,10 @@ router.push('/auth/login/')
               >
                 {categories.map((item) => (
                   <button
-                    key={item.name}
+                    key={item.value}
                     type="button"
+                    onClick={() => setSelectedCategory(item.value)}
+                    aria-pressed={selectedCategory === item.value}
                     style={{
                       minHeight: 76,
                       display: "flex",
@@ -263,16 +401,15 @@ router.push('/auth/login/')
                       gap: 8,
                       padding: "12px 10px",
                       borderRadius: "var(--radius-md)",
-                      border: "1px solid var(--border)",
-                      background: "var(--card)",
-                      color: "var(--text-secondary)",
-                      fontFamily: "inherit",
-                      fontSize: 13,
-                      fontWeight: 500,
+                      border:
+                        selectedCategory === item.value
+                          ? "2px solid var(--primary)"
+                          : "1px solid var(--border)",
+                      background:
+                        selectedCategory === item.value
+                          ? "var(--background-secondary)"
+                          : "var(--card)",
                       cursor: "pointer",
-                      outline: "none",
-                      boxShadow: "none",
-                      transition: "all 0.18s ease",
                     }}
                   >
                     {item.icon}
@@ -307,7 +444,7 @@ router.push('/auth/login/')
                   color: "var(--text-muted)",
                 }}
               >
-                Your registered location is used automatically.
+                Your registered location is loaded from your account.
               </p>
             </div>
 
@@ -338,24 +475,20 @@ router.push('/auth/login/')
 
               <div
                 style={{
-                  display: "flex",
-                  alignItems: "center",
-                  flexWrap: "wrap",
-                  gap: 7,
                   fontSize: 14,
                   color: "var(--text-secondary)",
                 }}
               >
-                <span>Gasabo</span>
-                <ChevronRight size={15} color="var(--text-muted)" />
-                <span>Ndera</span>
-                <ChevronRight size={15} color="var(--text-muted)" />
-                <span>Bwiza</span>
-                <ChevronRight size={15} color="var(--text-muted)" />
-
-                <strong style={{ color: "var(--text-primary)" }}>
-                  Ruhangare
-                </strong>
+                {loadingUser
+                  ? "Loading your location..."
+                  : [
+                      user.district,
+                      user.sector,
+                      user.cell,
+                      user.village,
+                    ]
+                      .filter(Boolean)
+                      .join(", ") || "Location not available"}
               </div>
             </div>
 
@@ -390,6 +523,10 @@ router.push('/auth/login/')
                   id="specificLocation"
                   name="specificLocation"
                   type="text"
+                  value={specificLocation}
+                  onChange={(event) =>
+                    setSpecificLocation(event.target.value)
+                  }
                   placeholder="Example: Near the primary school"
                   style={{
                     paddingLeft: 42,
@@ -407,8 +544,8 @@ router.push('/auth/login/')
                   color: "var(--text-muted)",
                 }}
               >
-                Add a nearby landmark to help the responsible
-                team find the problem easily.
+                Add a nearby landmark to help the responsible team
+                find the problem.
               </p>
             </div>
           </section>
@@ -490,141 +627,63 @@ router.push('/auth/login/')
                   fontSize: 12,
                 }}
               >
-                JPG, PNG or HEIC · Maximum 10MB
+                JPG, PNG or WebP · Maximum 10MB
               </span>
 
               <input
                 id="photo"
                 name="photo"
                 type="file"
-                accept="image/jpeg,image/png,image/heic"
+                onChange={handlePhotoChange}
+                accept="image/jpeg,image/png,image/webp"
                 style={{ display: "none" }}
               />
+
+              {photo && (
+                <p style={{ marginTop: 12, fontSize: 13 }}>
+                  Selected image: {photo.name}
+                </p>
+              )}
             </label>
           </section>
 
-          {/* PUBLIC REPORT */}
-          <section
-            className="card"
-            style={{
-              padding: "20px 22px",
-              marginBottom: 28,
-            }}
-          >
-            <div
-              style={{
-                width: "100%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: 20,
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 13,
-                }}
-              >
-                <div
-                  style={{
-                    width: 38,
-                    height: 38,
-                    flexShrink: 0,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    borderRadius: 11,
-                    background: "var(--background-secondary)",
-                    color: "var(--text-secondary)",
-                  }}
-                >
-                  <FileText size={18} />
-                </div>
+          {/* MESSAGES */}
+          {errorMessage && (
+            <p role="alert" style={{ color: "#b42318", marginBottom: 16 }}>
+              {errorMessage}
+            </p>
+          )}
 
-                <div>
-                  <div
-                    style={{
-                      color: "var(--text-primary)",
-                      fontSize: 14,
-                      fontWeight: 600,
-                    }}
-                  >
-                    Make this report public
-                  </div>
+          {successMessage && (
+            <p role="status" style={{ color: "green", marginBottom: 16 }}>
+              {successMessage}
+            </p>
+          )}
 
-                  <div
-                    style={{
-                      marginTop: 3,
-                      color: "var(--text-muted)",
-                      fontSize: 12,
-                    }}
-                  >
-                    Allow other citizens to see this report
-                  </div>
-                </div>
-              </div>
-
-              {/* STATIC SWITCH DESIGN */}
-              <div
-                style={{
-                  width: 46,
-                  height: 26,
-                  flexShrink: 0,
-                  padding: 3,
-                  borderRadius: 999,
-                  background: "var(--primary)",
-                }}
-              >
-                <div
-                  style={{
-                    width: 20,
-                    height: 20,
-                    borderRadius: "50%",
-                    background: "#ffffff",
-                    transform: "translateX(20px)",
-                    boxShadow: "0 1px 3px rgba(0,0,0,0.15)",
-                  }}
-                />
-              </div>
-            </div>
-          </section>
-
-          {/* BOTTOM ACTIONS */}
+          {/* SUBMIT */}
           <div
             style={{
               display: "flex",
               alignItems: "center",
-              justifyContent: "space-between",
+              justifyContent: "flex-end",
               gap: 20,
               flexWrap: "wrap",
             }}
           >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 7,
-                color: "var(--text-muted)",
-                fontSize: 12,
-              }}
-            >
-              <Check size={15} color="var(--primary)" />
-              You can track your report after submitting
-            </div>
-
             <button
-              type="button"
+              type="submit"
+              disabled={submitting || loadingUser}
               className="btn-primary"
               style={{
                 minHeight: 48,
                 padding: "0 22px",
                 gap: 9,
                 outline: "none",
+                opacity: submitting || loadingUser ? 0.6 : 1,
+                cursor: submitting || loadingUser ? "not-allowed" : "pointer",
               }}
             >
-              Submit Report
+              {submitting ? "Submitting..." : "Submit Report"}
               <Send size={17} />
             </button>
           </div>

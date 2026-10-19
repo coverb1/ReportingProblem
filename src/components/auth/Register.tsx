@@ -2,7 +2,16 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import {UserRound,Mail,Lock,Eye,EyeOff, MapPin,ChevronDown,ArrowRight,} from "lucide-react";
+import {
+  UserRound,
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  MapPin,
+  ChevronDown,
+  ArrowRight,
+} from "lucide-react";
 import axios from "axios";
 import { toast } from "react-toastify";
 
@@ -27,7 +36,6 @@ export default function SignUpPage() {
   const [email, setEmail] = useState("");
   const [passWord, setPassWord] = useState("");
   const [phoneNumber, setphoneNumber] = useState("");
-
 
   useEffect(() => {
     const getDistrict = async () => {
@@ -105,9 +113,11 @@ export default function SignUpPage() {
       setVillage([]);
       return;
     }
+
     const response = await axios.get(
       `http://localhost:3000/location/cells/${cellId}/villages`
     );
+
     setVillage(response.data);
   };
 
@@ -125,19 +135,21 @@ export default function SignUpPage() {
     e.preventDefault();
 
     try {
-      const response = await axios.post(`http://localhost:3000/auth/register`,{
+      const response = await axios.post(
+        `http://localhost:3000/auth/register`,
+        {
           name,
           email,
           password: passWord,
           villageId,
-          phoneNumber
+          phoneNumber,
         }
       );
 
       console.log(`Registration successful${response.data}`);
 
       toast.success("Registration successful!");
-      window.location.href="/auth/login"
+      window.location.href = "/auth/login";
 
       setName("");
       setEmail("");
@@ -147,13 +159,21 @@ export default function SignUpPage() {
       setSectorsId("");
       setCellId("");
       setVillageId("");
-      setphoneNumber("")
+      setphoneNumber("");
 
       setSectors([]);
       setCells([]);
       setVillage([]);
-    } catch (error) {
-      toast.error(`Registration failed! ${error}`);
+    } catch (error:any) {
+      if (error.response?.status===409)
+         {
+        toast.error("User already exists!");
+      }
+      else{
+        toast.error(
+      error.response?.data?.message || "Registration failed!"
+    );
+      }
     }
   };
 
@@ -163,13 +183,10 @@ export default function SignUpPage() {
   return (
     <main className="!min-h-screen !bg-[var(--background-secondary)] !px-4 !py-8 sm:!px-6 sm:!py-12">
       <div className="!mx-auto !w-full !max-w-[900px]">
-
         {/* Card */}
         <div className="!w-full !overflow-hidden !rounded-[var(--radius-lg)] !border !border-[var(--border-light)] !bg-[var(--background)] !shadow-sm">
-
           {/* Card Content */}
           <div className="!p-6 sm:!p-10">
-
             {/* Header */}
             <div className="!mb-8">
               <h1 className="!m-0 !text-3xl !font-bold !leading-tight !text-[var(--text-primary)] sm:!text-[36px]">
@@ -186,7 +203,6 @@ export default function SignUpPage() {
               onSubmit={handleRegister}
               className="!grid !grid-cols-1 !gap-10 md:!grid-cols-2 md:!gap-12"
             >
-
               {/* Personal Information */}
               <div>
                 <h2 className="!mb-6 !mt-0 !text-base !font-bold !text-[var(--text-primary)]">
@@ -294,19 +310,17 @@ export default function SignUpPage() {
                     </button>
                   </div>
                 </div>
-                {/* //////////// */}
 
-
-{/* Password */}
-                <div>
+                {/* Phone Number */}
+                <div className="!mt-5">
                   <label
-                    htmlFor="password"
+                    htmlFor="phoneNumber"
                     className="!mb-1.5 !block !text-sm !font-medium !text-[var(--text-primary)]"
                   >
-                    Password
+                    phoneNumber
                   </label>
 
-                  <div className="!relative ">
+                  <div className="!relative">
                     <Lock
                       size={18}
                       strokeWidth={1.8}
@@ -314,25 +328,29 @@ export default function SignUpPage() {
                     />
 
                     <input
-                      id="password"
-                      name="password"
+                      id="phoneNumber"
+                      name="phoneNumber"
+                      type="tel"
                       value={phoneNumber}
-                      onChange={(e)=>setphoneNumber(e.target.value)}
-                      placeholder="+250"
-                      autoComplete="new-password"
-                      className="!m-0 !block !h-12 !w-full !rounded-[var(--radius-md)] !border !border-[var(--border)] !bg-[var(--background)] !px-4 !py-3 !pl-11 !pr-12 !text-sm !font-normal !text-[var(--text-primary)] !outline-none !transition-all !placeholder:text-[var(--text-muted)] focus:!border-[var(--primary)] focus:!ring-2 focus:!ring-[var(--primary-light)]"
+                      onChange={(e) =>
+                        setphoneNumber(e.target.value.replace(/\D/g, "").slice(0, 10))
+                      }
+                      placeholder="0781234567"
+                      inputMode="numeric"
+                      maxLength={10}
+                      required
+                      pattern="[0-9]{10}"
+                      title="Enter exactly 10 digits"
+                      autoComplete="tel"
+                      className="!m-0 !block !h-12 !w-full !rounded-[var(--radius-md)] !border !border-[var(--border)] !bg-[var(--background)] !px-4 !py-3 !pl-11 !text-sm"
                     />
 
                     <button
-                      type="button" className="!absolute !right-3 !top-1/2 !flex !h-8 !w-8 !-translate-y-1/2 !items-center !justify-center !rounded-md !border-0 !bg-transparent !p-0 !text-[var(--text-muted)] !transition-colors hover:!text-[var(--primary)] focus:!outline-none"
-                    >
-                    </button>
+                      type="button"
+                      className="!absolute !right-3 !top-1/2 !flex !h-8 !w-8 !-translate-y-1/2 !items-center !justify-center !rounded-md !border-0 !bg-transparent !p-0 !text-[var(--text-muted)] !transition-colors hover:!text-[var(--primary)] focus:!outline-none"
+                    ></button>
                   </div>
                 </div>
-                {/* //////////// */}
-
-
-
               </div>
 
               {/* Location Information */}

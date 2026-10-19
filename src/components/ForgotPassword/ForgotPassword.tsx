@@ -1,46 +1,65 @@
+
 "use client";
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { Mail, ArrowRight, ShieldCheck } from "lucide-react";
+import { Mail, ArrowRight, LoaderCircle } from "lucide-react";
 import axios from "axios";
 import { toast } from "react-toastify";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
-
-  const handleSubmitPassword = async (e: React.FormEvent) => {
+  const handleSubmitPassword = async (
+    e: React.FormEvent<HTMLFormElement>
+  ) => {
     e.preventDefault();
+
+    setLoading(true);
+
     try {
-     const response= await axios.post(
-        `http://localhost:3000/auth/ForgotPassword`, {email, }
+      await axios.post(
+        "http://localhost:3000/auth/ForgotPassword",
+        { email }
       );
-if (response) {
-  toast.success("Email sent well")
-  // window.location.href="/auth/login"
-}
-setEmail("")
-    } catch (error: any) {
- toast.error(error)
+
+      toast.success("Password reset link sent successfully!");
+      setEmail("");
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        const status = error.response?.status;
+        const message = error.response?.data?.message;
+
+        if (
+          status === 404 ||
+          (typeof message === "string" &&
+            message.toLowerCase().includes("user does not exist"))
+        ) {
+          toast.error("User does not exist!");
+        } else {
+          toast.error(
+            typeof message === "string"
+              ? message
+              : "Failed to send reset link. Please try again."
+          );
+        }
+      } else {
+        toast.error("Something went wrong. Please try again.");
+      }
     } finally {
-      
+      setLoading(false);
     }
   };
+
   return (
     <main className="signup-page">
       <div className="signup-container">
-
-        {/* Logo */}
         <Link href="/" className="signup-logo">
           RCPMS
         </Link>
 
-        {/* Card */}
         <div className="signup-card">
-          {/* Header */}
           <div className="signup-header">
             <h1>Forgot Password?</h1>
 
@@ -50,20 +69,14 @@ setEmail("")
             </p>
           </div>
 
-          {/* Error */}
-          {error && (
-            <div className="signup-error">
-              {error}
-            </div>
-          )}
+          {/*
+            Keep your existing design.
+            Toastify handles success and error messages.
+          */}
 
-          {/* Form */}
-          <form onSubmit={handleSubmitPassword} >
-
+          <form onSubmit={handleSubmitPassword}>
             <div className="form-group">
-              <label htmlFor="email">
-                Email Address
-              </label>
+              <label htmlFor="email">Email Address</label>
 
               <div className="input-wrapper">
                 <Mail />
@@ -76,24 +89,39 @@ setEmail("")
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter your email"
                   required
+                  disabled={loading}
                 />
               </div>
             </div>
-                 <button type="submit">
-                  Send Reset Link
-                  <ArrowRight size={16} />
-                </button>   
-    
+
+           
+<button
+  type="submit"
+  className="btn-primary forgot-password-submit"
+  disabled={loading}
+>
+  {loading ? (
+    <>
+      <LoaderCircle
+        size={18}
+        className="forgot-password-spinner"
+      />
+      <span>Sending...</span>
+    </>
+  ) : (
+    <>
+      <span>Send Reset Link</span>
+      <ArrowRight size={18} />
+    </>
+  )}
+</button>
+
           </form>
 
-          {/* Login */}
           <p className="signin-text">
             Remember your password?{" "}
-            <Link href="/login">
-              Sign in
-            </Link>
+            <Link href="/login">Sign in</Link>
           </p>
-
         </div>
       </div>
     </main>
