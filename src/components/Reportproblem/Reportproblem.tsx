@@ -12,7 +12,7 @@ import {
   Trash2,
   Waves,
 } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 
@@ -23,15 +23,31 @@ type Category = {
 };
 
 const categories: Category[] = [
-  { name: "Roads", value: "ROADS", icon: <Road size={20} strokeWidth={1.8} /> },
-  { name: "Water", value: "WATER", icon: <Droplets size={20} strokeWidth={1.8} /> },
+  {
+    name: "Roads",
+    value: "ROADS",
+    icon: <Road size={20} strokeWidth={1.8} />,
+  },
+  {
+    name: "Water",
+    value: "WATER",
+    icon: <Droplets size={20} strokeWidth={1.8} />,
+  },
   {
     name: "Street Lighting",
     value: "STREET_LIGHTING",
     icon: <Lightbulb size={20} strokeWidth={1.8} />,
   },
-  { name: "Waste", value: "WASTE", icon: <Recycle size={20} strokeWidth={1.8} /> },
-  { name: "Drainage", value: "DRAINAGE", icon: <Waves size={20} strokeWidth={1.8} /> },
+  {
+    name: "Waste",
+    value: "WASTE",
+    icon: <Recycle size={20} strokeWidth={1.8} />,
+  },
+  {
+    name: "Drainage",
+    value: "DRAINAGE",
+    icon: <Waves size={20} strokeWidth={1.8} />,
+  },
   {
     name: "Public Infrastructure",
     value: "PUBLIC_INFRASTRUCTURE",
@@ -47,7 +63,9 @@ type UserLocation = {
 };
 
 function getLocationName(value: unknown): string {
-  if (typeof value === "string") return value;
+  if (typeof value === "string") {
+    return value;
+  }
 
   if (value && typeof value === "object" && "name" in value) {
     const name = (value as { name?: unknown }).name;
@@ -60,12 +78,17 @@ function getLocationName(value: unknown): string {
 export default function ReportProblemPage() {
   const router = useRouter();
 
+  const photoInputRef = useRef<HTMLInputElement>(null);
+
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [specificLocation, setSpecificLocation] = useState("");
   const [isPublic] = useState(true);
+
   const [photo, setPhoto] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+
   const [token, setToken] = useState<string | null>(null);
 
   const [user, setUser] = useState<UserLocation>({
@@ -80,12 +103,29 @@ export default function ReportProblemPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
-  // Get the login token and the current user's location.
+  // Create and clean up the image preview URL.
+  useEffect(() => {
+    if (!photo) {
+      setPhotoPreview(null);
+      return;
+    }
+
+    const imageUrl = URL.createObjectURL(photo);
+
+    setPhotoPreview(imageUrl);
+
+    return () => {
+      URL.revokeObjectURL(imageUrl);
+    };
+  }, [photo]);
+
+  // Get the login token and current user's location.
   useEffect(() => {
     const savedToken = localStorage.getItem("token");
 
     if (!savedToken) {
       router.push("/auth/login/");
+      setLoadingUser(false);
       return;
     }
 
@@ -112,7 +152,10 @@ export default function ReportProblemPage() {
         });
       } catch (error) {
         console.error("Failed to get current user:", error);
-        setErrorMessage("Could not load your registered location.");
+
+        setErrorMessage(
+          "Could not load your registered location."
+        );
       } finally {
         setLoadingUser(false);
       }
@@ -121,7 +164,7 @@ export default function ReportProblemPage() {
     getCurrentUser();
   }, [router]);
 
-  // Save the selected image.
+  // Select and validate the image.
   const handlePhotoChange = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -142,20 +185,38 @@ export default function ReportProblemPage() {
     ];
 
     if (!allowedTypes.includes(file.type)) {
-      setErrorMessage("Please choose a JPG, PNG, or WebP image.");
+      setErrorMessage(
+        "Please choose a JPG, PNG, or WebP image."
+      );
+
       event.target.value = "";
       setPhoto(null);
       return;
     }
 
     if (file.size > 10 * 1024 * 1024) {
-      setErrorMessage("The image must be 10MB or smaller.");
+      setErrorMessage(
+        "The image must be 10MB or smaller."
+      );
+
       event.target.value = "";
       setPhoto(null);
       return;
     }
 
     setPhoto(file);
+  };
+
+  // Remove the selected image.
+  const handleRemovePhoto = () => {
+    setPhoto(null);
+
+    if (photoInputRef.current) {
+      photoInputRef.current.value = "";
+    }
+
+    setErrorMessage("");
+    setSuccessMessage("");
   };
 
   // Submit the report to NestJS.
@@ -168,13 +229,18 @@ export default function ReportProblemPage() {
     setSuccessMessage("");
 
     if (!token) {
-      setErrorMessage("Please log in before submitting a report.");
+      setErrorMessage(
+        "Please log in before submitting a report."
+      );
+
       router.push("/auth/login/");
       return;
     }
 
     if (!title.trim() || !description.trim()) {
-      setErrorMessage("Please enter a title and description.");
+      setErrorMessage(
+        "Please enter a title and description."
+      );
       return;
     }
 
@@ -191,10 +257,13 @@ export default function ReportProblemPage() {
       formData.append("title", title.trim());
       formData.append("description", description.trim());
       formData.append("category", selectedCategory);
-      formData.append("specificLocation", specificLocation.trim());
+      formData.append(
+        "specificLocation",
+        specificLocation.trim()
+      );
       formData.append("isPublic", String(isPublic));
 
-      // Send the real image file, not String(photo).
+      // Send the actual image file to the backend.
       if (photo) {
         formData.append("photo", photo);
       }
@@ -211,19 +280,18 @@ export default function ReportProblemPage() {
 
       console.log("Report created:", response.data);
 
-      setSuccessMessage("Your report was submitted successfully!");
+      setSuccessMessage(
+        "Your report was submitted successfully!"
+      );
+
       setTitle("");
       setDescription("");
       setSelectedCategory("");
       setSpecificLocation("");
       setPhoto(null);
 
-      const fileInput = document.getElementById(
-        "photo"
-      ) as HTMLInputElement | null;
-
-      if (fileInput) {
-        fileInput.value = "";
+      if (photoInputRef.current) {
+        photoInputRef.current.value = "";
       }
     } catch (error) {
       console.error("Failed to submit report:", error);
@@ -239,7 +307,9 @@ export default function ReportProblemPage() {
               : "Failed to submit your report. Please try again."
         );
       } else {
-        setErrorMessage("Something went wrong. Please try again.");
+        setErrorMessage(
+          "Something went wrong. Please try again."
+        );
       }
     } finally {
       setSubmitting(false);
@@ -340,15 +410,22 @@ export default function ReportProblemPage() {
                 type="text"
                 required
                 value={title}
-                onChange={(event) => setTitle(event.target.value)}
+                onChange={(event) =>
+                  setTitle(event.target.value)
+                }
                 placeholder="For example: Broken street light"
-                style={{ outline: "none", boxShadow: "none" }}
+                style={{
+                  outline: "none",
+                  boxShadow: "none",
+                }}
               />
             </div>
 
             {/* DESCRIPTION */}
             <div style={{ marginBottom: 27 }}>
-              <label htmlFor="description">Description</label>
+              <label htmlFor="description">
+                Description
+              </label>
 
               <textarea
                 id="description"
@@ -357,7 +434,9 @@ export default function ReportProblemPage() {
                 maxLength={500}
                 required
                 value={description}
-                onChange={(event) => setDescription(event.target.value)}
+                onChange={(event) =>
+                  setDescription(event.target.value)
+                }
                 placeholder="Explain what happened, where it happened, and how it affects the community..."
                 style={{
                   resize: "vertical",
@@ -371,9 +450,19 @@ export default function ReportProblemPage() {
 
             {/* CATEGORY */}
             <div>
-              <label style={{ display: "block", marginBottom: 10 }}>
+              <label
+                style={{
+                  display: "block",
+                  marginBottom: 10,
+                }}
+              >
                 Category
-                <span style={{ color: "#b42318", marginLeft: 4 }}>
+                <span
+                  style={{
+                    color: "#b42318",
+                    marginLeft: 4,
+                  }}
+                >
                   *
                 </span>
               </label>
@@ -390,8 +479,12 @@ export default function ReportProblemPage() {
                   <button
                     key={item.value}
                     type="button"
-                    onClick={() => setSelectedCategory(item.value)}
-                    aria-pressed={selectedCategory === item.value}
+                    onClick={() =>
+                      setSelectedCategory(item.value)
+                    }
+                    aria-pressed={
+                      selectedCategory === item.value
+                    }
                     style={{
                       minHeight: 76,
                       display: "flex",
@@ -444,7 +537,8 @@ export default function ReportProblemPage() {
                   color: "var(--text-muted)",
                 }}
               >
-                Your registered location is loaded from your account.
+                Your registered location is loaded from your
+                account.
               </p>
             </div>
 
@@ -469,7 +563,10 @@ export default function ReportProblemPage() {
                   fontWeight: 600,
                 }}
               >
-                <MapPin size={17} color="var(--primary)" />
+                <MapPin
+                  size={17}
+                  color="var(--primary)"
+                />
                 Your registered location
               </div>
 
@@ -488,7 +585,8 @@ export default function ReportProblemPage() {
                       user.village,
                     ]
                       .filter(Boolean)
-                      .join(", ") || "Location not available"}
+                      .join(", ") ||
+                    "Location not available"}
               </div>
             </div>
 
@@ -544,8 +642,8 @@ export default function ReportProblemPage() {
                   color: "var(--text-muted)",
                 }}
               >
-                Add a nearby landmark to help the responsible team
-                find the problem.
+                Add a nearby landmark to help the responsible
+                team find the problem.
               </p>
             </div>
           </section>
@@ -578,6 +676,7 @@ export default function ReportProblemPage() {
               </p>
             </div>
 
+            {/* IMAGE UPLOAD AREA */}
             <label
               htmlFor="photo"
               style={{
@@ -617,7 +716,7 @@ export default function ReportProblemPage() {
                   fontWeight: 600,
                 }}
               >
-                Choose a photo
+                {photo ? "Choose another photo" : "Choose a photo"}
               </span>
 
               <span
@@ -631,6 +730,7 @@ export default function ReportProblemPage() {
               </span>
 
               <input
+                ref={photoInputRef}
                 id="photo"
                 name="photo"
                 type="file"
@@ -638,24 +738,94 @@ export default function ReportProblemPage() {
                 accept="image/jpeg,image/png,image/webp"
                 style={{ display: "none" }}
               />
-
-              {photo && (
-                <p style={{ marginTop: 12, fontSize: 13 }}>
-                  Selected image: {photo.name}
-                </p>
-              )}
             </label>
+
+            {/* IMAGE PREVIEW - OUTSIDE THE LABEL */}
+            {photoPreview && (
+              <div
+                style={{
+                  marginTop: 20,
+                  padding: 15,
+                  border: "1px solid var(--border)",
+                  borderRadius: "var(--radius-md)",
+                }}
+              >
+                <p
+                  style={{
+                    marginTop: 0,
+                    marginBottom: 12,
+                    fontSize: 14,
+                    fontWeight: 600,
+                  }}
+                >
+                  Image preview
+                </p>
+
+                <img
+                  src={photoPreview}
+                  alt="Preview of the selected problem"
+                  style={{
+                    display: "block",
+                    width: "100%",
+                    maxWidth: 500,
+                    maxHeight: 300,
+                    objectFit: "contain",
+                    borderRadius: 10,
+                    margin: "0 auto",
+                  }}
+                />
+
+                <p
+                  style={{
+                    marginTop: 12,
+                    marginBottom: 12,
+                    fontSize: 13,
+                    color: "var(--text-secondary)",
+                    overflowWrap: "anywhere",
+                  }}
+                >
+                  Selected image: {photo?.name}
+                </p>
+
+                <button
+                  type="button"
+                  onClick={handleRemovePhoto}
+                  style={{
+                    padding: "9px 14px",
+                    borderRadius: "var(--radius-md)",
+                    border: "1px solid var(--border)",
+                    background: "var(--card)",
+                    color: "#b42318",
+                    cursor: "pointer",
+                  }}
+                >
+                  Remove photo
+                </button>
+              </div>
+            )}
           </section>
 
           {/* MESSAGES */}
           {errorMessage && (
-            <p role="alert" style={{ color: "#b42318", marginBottom: 16 }}>
+            <p
+              role="alert"
+              style={{
+                color: "#b42318",
+                marginBottom: 16,
+              }}
+            >
               {errorMessage}
             </p>
           )}
 
           {successMessage && (
-            <p role="status" style={{ color: "green", marginBottom: 16 }}>
+            <p
+              role="status"
+              style={{
+                color: "green",
+                marginBottom: 16,
+              }}
+            >
               {successMessage}
             </p>
           )}
@@ -679,8 +849,12 @@ export default function ReportProblemPage() {
                 padding: "0 22px",
                 gap: 9,
                 outline: "none",
-                opacity: submitting || loadingUser ? 0.6 : 1,
-                cursor: submitting || loadingUser ? "not-allowed" : "pointer",
+                opacity:
+                  submitting || loadingUser ? 0.6 : 1,
+                cursor:
+                  submitting || loadingUser
+                    ? "not-allowed"
+                    : "pointer",
               }}
             >
               {submitting ? "Submitting..." : "Submit Report"}

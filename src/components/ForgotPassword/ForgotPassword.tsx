@@ -94,27 +94,27 @@ export default function ForgotPasswordPage() {
               </div>
             </div>
 
-           
-<button
-  type="submit"
-  className="btn-primary forgot-password-submit"
-  disabled={loading}
->
-  {loading ? (
-    <>
-      <LoaderCircle
-        size={18}
-        className="forgot-password-spinner"
-      />
-      <span>Sending...</span>
-    </>
-  ) : (
-    <>
-      <span>Send Reset Link</span>
-      <ArrowRight size={18} />
-    </>
-  )}
-</button>
+
+            <button
+              type="submit"
+              className="btn-primary forgot-password-submit"
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <LoaderCircle
+                    size={18}
+                    className="forgot-password-spinner"
+                  />
+                  <span>Sending...</span>
+                </>
+              ) : (
+                <>
+                  <span>Send Reset Link</span>
+                  <ArrowRight size={18} />
+                </>
+              )}
+            </button>
 
           </form>
 
