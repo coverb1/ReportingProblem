@@ -1,17 +1,7 @@
 
 "use client";
 
-import {
-  Camera,
-  Droplets,
-  Lightbulb,
-  MapPin,
-  Recycle,
-  Road,
-  Send,
-  Trash2,
-  Waves,
-} from "lucide-react";
+import { Camera, Droplets, Lightbulb, MapPin, Recycle, Road, Send, Trash2, Waves, } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
@@ -86,7 +76,7 @@ export default function ReportProblemPage() {
   const [specificLocation, setSpecificLocation] = useState("");
   const [isPublic] = useState(true);
 
-  const [photo, setPhoto] = useState<File | null>(null);
+  const [file, setfile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
 
   const [token, setToken] = useState<string | null>(null);
@@ -105,19 +95,19 @@ export default function ReportProblemPage() {
 
   // Create and clean up the image preview URL.
   useEffect(() => {
-    if (!photo) {
+    if (!file) {
       setPhotoPreview(null);
       return;
     }
 
-    const imageUrl = URL.createObjectURL(photo);
+    const imageUrl = URL.createObjectURL(file);
 
     setPhotoPreview(imageUrl);
 
     return () => {
       URL.revokeObjectURL(imageUrl);
     };
-  }, [photo]);
+  }, [file]);
 
   // Get the login token and current user's location.
   useEffect(() => {
@@ -174,7 +164,7 @@ export default function ReportProblemPage() {
     setSuccessMessage("");
 
     if (!file) {
-      setPhoto(null);
+      setfile(null);
       return;
     }
 
@@ -190,7 +180,7 @@ export default function ReportProblemPage() {
       );
 
       event.target.value = "";
-      setPhoto(null);
+      setfile(null);
       return;
     }
 
@@ -200,16 +190,16 @@ export default function ReportProblemPage() {
       );
 
       event.target.value = "";
-      setPhoto(null);
+      setfile(null);
       return;
     }
 
-    setPhoto(file);
+    setfile(file);
   };
 
   // Remove the selected image.
   const handleRemovePhoto = () => {
-    setPhoto(null);
+    setfile(null);
 
     if (photoInputRef.current) {
       photoInputRef.current.value = "";
@@ -264,8 +254,8 @@ export default function ReportProblemPage() {
       formData.append("isPublic", String(isPublic));
 
       // Send the actual image file to the backend.
-      if (photo) {
-        formData.append("photo", photo);
+      if (file) {
+        formData.append("file", file);
       }
 
       const response = await axios.post(
@@ -288,7 +278,7 @@ export default function ReportProblemPage() {
       setDescription("");
       setSelectedCategory("");
       setSpecificLocation("");
-      setPhoto(null);
+      setfile(null);
 
       if (photoInputRef.current) {
         photoInputRef.current.value = "";
@@ -579,14 +569,14 @@ export default function ReportProblemPage() {
                 {loadingUser
                   ? "Loading your location..."
                   : [
-                      user.district,
-                      user.sector,
-                      user.cell,
-                      user.village,
-                    ]
-                      .filter(Boolean)
-                      .join(", ") ||
-                    "Location not available"}
+                    user.district,
+                    user.sector,
+                    user.cell,
+                    user.village,
+                  ]
+                    .filter(Boolean)
+                    .join(", ") ||
+                  "Location not available"}
               </div>
             </div>
 
@@ -678,7 +668,7 @@ export default function ReportProblemPage() {
 
             {/* IMAGE UPLOAD AREA */}
             <label
-              htmlFor="photo"
+              htmlFor="file"
               style={{
                 display: "flex",
                 flexDirection: "column",
@@ -716,7 +706,7 @@ export default function ReportProblemPage() {
                   fontWeight: 600,
                 }}
               >
-                {photo ? "Choose another photo" : "Choose a photo"}
+                {file ? "Choose another photo" : "Choose a photo"}
               </span>
 
               <span
@@ -731,7 +721,7 @@ export default function ReportProblemPage() {
 
               <input
                 ref={photoInputRef}
-                id="photo"
+                id="file"
                 name="photo"
                 type="file"
                 onChange={handlePhotoChange}
@@ -784,7 +774,7 @@ export default function ReportProblemPage() {
                     overflowWrap: "anywhere",
                   }}
                 >
-                  Selected image: {photo?.name}
+                  Selected image: {file?.name}
                 </p>
 
                 <button
