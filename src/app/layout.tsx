@@ -22,7 +22,7 @@ export default function RootLayout({
         <ToastContainer/>
         <Navbar/>
         {/* <Footer/> */}
-        <main style={{paddingTop:72}}>{children}</main>
+        <main>{children}</main>
         </body>
     </html>
   );
