@@ -1,14 +1,9 @@
+
 "use client";
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import {
-  ChevronDown,
-  UserRound,
-  Check,
-  LogIn,
-  UserPlus,
-} from "lucide-react";
+import {ChevronDown,UserRound,LogIn,UserPlus,MapPin,ShieldCheck,LogOut,Settings,} from "lucide-react";
 import { usePathname } from "next/navigation";
 import axios from "axios";
 
@@ -17,53 +12,48 @@ type NavLink = {
   href: string;
 };
 
+type CurrentUser = {
+  id?: string;
+  name: string;
+  email: string;
+  role: string;
+};
+
 const LINKS: NavLink[] = [
   { label: "Home", href: "/" },
-  { label: "My Reports", href: "/myReport" },
+  { label: "My Reports", href: "/MyReport" },
   { label: "Public Map", href: "/locationmap" },
-];
-
-const ROLE_OPTIONS = [
-  "Citizen",
-  "Organisation",
-  "Staff",
-  "Admin",
 ];
 
 export default function Navbar() {
   const pathname = usePathname();
 
-  // User information
-  const [user, setUser] = useState<{
-    name: string;
-    email: string;
-    role: string;
-  } | null>(null);
-
-  // JWT token
+  const [user, setUser] = useState<CurrentUser | null>(null);
   const [token, setToken] = useState<string | null>(null);
-
-  // Your existing role dropdown
-  const [role, setRole] = useState("Citizen");
-
-  const [open, setOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [loadingUser, setLoadingUser] = useState(true);
 
-  const dropdownRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
 
-  
-
+  // Get the saved authentication token.
   useEffect(() => {
     const savedToken = localStorage.getItem("token");
-
     setToken(savedToken);
   }, []);
 
-  
-
+  // Get the authenticated user's information.
   useEffect(() => {
+    let cancelled = false;
+
     const handleGetMe = async () => {
+      if (!token) {
+        setUser(null);
+        setLoadingUser(false);
+        return;
+      }
+
+      setLoadingUser(true);
+
       try {
         const response = await axios.get(
           "http://localhost:3000/auth/me",
@@ -74,126 +64,123 @@ export default function Navbar() {
           }
         );
 
-        console.log("CURRENT USER:", response.data);
+        if (cancelled) return;
 
         setUser({
+          id: response.data.id,
           name: response.data.name,
           email: response.data.email,
           role: response.data.role,
         });
-
-   
-        setRole(response.data.role);
-
       } catch (error) {
-        console.log("GET ME ERROR:", error);
+        if (cancelled) return;
 
-        
-        localStorage.removeItem("token");
+        console.error("GET ME ERROR:", error);
 
-        setToken(null);
-        setUser(null);
+        // Clear the token only when the server rejects authentication.
+        if (
+          axios.isAxiosError(error) &&
+          (error.response?.status === 401 ||
+            error.response?.status === 403)
+        ) {
+          localStorage.removeItem("token");
+          setToken(null);
+          setUser(null);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoadingUser(false);
+        }
       }
     };
 
-    if (token) {
-      handleGetMe();
-    }
-  }, [token]);
-
-
-
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      const target = e.target as Node;
-
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(target)
-      ) {
-        setOpen(false);
-      }
-
-      if (
-        profileRef.current &&
-        !profileRef.current.contains(target)
-      ) {
-        setProfileOpen(false);
-      }
-    }
-
-    function handleEscape(e: KeyboardEvent) {
-      if (e.key === "Escape") {
-        setOpen(false);
-        setProfileOpen(false);
-      }
-    }
-
-    document.addEventListener(
-      "mousedown",
-      handleClickOutside
-    );
-
-    document.addEventListener(
-      "keydown",
-      handleEscape
-    );
+    void handleGetMe();
 
     return () => {
-      document.removeEventListener(
-        "mousedown",
-        handleClickOutside
-      );
+      cancelled = true;
+    };
+  }, [token]);
 
-      document.removeEventListener(
-        "keydown",
-        handleEscape
-      );
+  // Close the menu when clicking outside or pressing Escape.
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        profileRef.current &&
+        !profileRef.current.contains(event.target as Node)
+      ) {
+        setProfileOpen(false);
+      }
+    }
+
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setProfileOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEscape);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscape);
     };
   }, []);
 
-
+  // Close the dropdown when navigating to another page.
+  useEffect(() => {
+    setProfileOpen(false);
+  }, [pathname]);
 
   const handleLogout = () => {
-  
     localStorage.removeItem("token");
-
-    
     setToken(null);
     setUser(null);
-
-
     setProfileOpen(false);
-
-
     window.location.href = "/";
   };
 
+  const getInitials = (name: string) => {
+    const parts = name.trim().split(/\s+/).filter(Boolean);
 
+    if (parts.length === 0) return "U";
+
+    return parts
+      .slice(0, 2)
+      .map((part) => part.charAt(0).toUpperCase())
+      .join("");
+  };
 
   const getRoleName = (backendRole: string) => {
-    switch (backendRole) {
-      case "CITIZEN":
-        return "Citizen";
+    const roleNames: Record<string, string> = {
+      CITIZEN: "Citizen",
+      VILLAGE_LEADER: "Village Leader",
+      CELL_LEADER: "Cell Leader",
+      SECTOR_LEADER: "Sector Leader",
+      DISTRICT_ADMIN: "District Admin",
+      SUPER_ADMIN: "Super Admin",
+      RBC_ADMIN: "RBC Admin",
+      DH_COUNSELOR: "DH Counselor",
+      HC_USER: "Health Centre User",
+      SCHOOL_COUNSELOR: "School Counselor",
+    };
 
-      case "VILLAGE_LEADER":
-        return "Village Leader";
+    return roleNames[backendRole] ?? backendRole;
+  };
 
-      case "CELL_LEADER":
-        return "Cell Leader";
-
-      case "SECTOR_LEADER":
-        return "Sector Leader";
-
-      case "DISTRICT_ADMIN":
-        return "District Admin";
-
-      case "SUPER_ADMIN":
-        return "Super Admin";
-
-      default:
-        return backendRole;
-    }
+  const menuLinkStyle: React.CSSProperties = {
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+    width: "100%",
+    minHeight: 44,
+    padding: "0 12px",
+    borderRadius: "var(--radius-sm)",
+    color: "var(--text-primary)",
+    textDecoration: "none",
+    fontSize: 13,
+    fontWeight: 500,
+    transition: "background-color 0.15s",
   };
 
   return (
@@ -219,18 +206,17 @@ export default function Navbar() {
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
+            gap: 20,
           }}
         >
-        
-
+          {/* Logo and navigation */}
           <div
             style={{
               display: "flex",
               alignItems: "center",
+              minWidth: 0,
             }}
           >
-           
-
             <Link
               href="/"
               style={{
@@ -280,6 +266,7 @@ export default function Navbar() {
                     fontSize: 10,
                     fontWeight: 500,
                     color: "var(--text-muted)",
+                    whiteSpace: "nowrap",
                   }}
                 >
                   Rwanda Community Problem Management System
@@ -287,9 +274,8 @@ export default function Navbar() {
               </div>
             </Link>
 
-           
-
             <div
+              className="rcpms-navbar-links"
               style={{
                 marginLeft: 40,
                 display: "flex",
@@ -303,17 +289,13 @@ export default function Navbar() {
                   link.href === "/"
                     ? pathname === "/"
                     : pathname === link.href ||
-                      pathname.startsWith(
-                        link.href + "/"
-                      );
+                      pathname.startsWith(link.href + "/");
 
                 return (
                   <Link
                     key={link.href}
                     href={link.href}
-                    className={`nav-link${
-                      isActive ? " active" : ""
-                    }`}
+                    className={`nav-link${isActive ? " active" : ""}`}
                     style={{
                       height: 38,
                       padding: "0 14px",
@@ -328,8 +310,6 @@ export default function Navbar() {
                       fontSize: 14,
                       lineHeight: 1,
                       whiteSpace: "nowrap",
-                      transition:
-                        "background-color 0.15s, color 0.15s",
                       textDecoration: "none",
                       color: "var(--text-primary)",
                     }}
@@ -341,194 +321,20 @@ export default function Navbar() {
             </div>
           </div>
 
-          
-
+          {/* User actions */}
           <div
             style={{
               display: "flex",
               alignItems: "center",
               gap: 12,
+              flexShrink: 0,
             }}
           >
-           
-
-            <div
-              ref={dropdownRef}
-              style={{
-                position: "relative",
-              }}
-            >
-              <button
-                type="button"
-                onClick={() => {
-                  setOpen((v) => !v);
-                  setProfileOpen(false);
-                }}
-                aria-haspopup="listbox"
-                aria-expanded={open}
-                style={{
-                  height: 38,
-                  minWidth: 112,
-                  padding: "0 13px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 8,
-                  borderRadius: "var(--radius-sm)",
-                  border: open
-                    ? "1px solid var(--primary)"
-                    : "1px solid var(--border)",
-                  background: "var(--card)",
-                  color: "var(--text-primary)",
-                  fontSize: 13,
-                  fontWeight: 600,
-                  lineHeight: 1,
-                  whiteSpace: "nowrap",
-                  cursor: "pointer",
-                  transition:
-                    "background-color 0.15s, border-color 0.15s",
-                }}
-              >
-                {/* USER ICON / USER NAME */}
-
-                {user ? (
-                  <span
-                    style={{
-                      fontSize: 14,
-                      fontWeight: 600,
-                    }}
-                  >
-                    {user.name}
-                  </span>
-                ) : (
-                  <UserRound
-                    size={14}
-                    strokeWidth={1.8}
-                    color="var(--text-muted)"
-                  />
-                )}
-
-                {/* ROLE */}
-
-                <span>
-                  {user
-                    ? getRoleName(user.role)
-                    : role}
-                </span>
-
-                <ChevronDown
-                  size={11}
-                  strokeWidth={2}
-                  color="var(--text-muted)"
-                  style={{
-                    transform: open
-                      ? "rotate(180deg)"
-                      : "rotate(0deg)",
-                    transition:
-                      "transform 0.15s",
-                  }}
-                />
-              </button>
-
-              {/* ROLE MENU */}
-
-              {open && (
-                <ul
-                  role="listbox"
-                  style={{
-                    position: "absolute",
-                    top: "calc(100% + 6px)",
-                    right: 0,
-                    minWidth: 160,
-                    background: "var(--card)",
-                    border: "1px solid var(--border)",
-                    borderRadius: "var(--radius-md)",
-                    padding: 6,
-                    margin: 0,
-                    listStyle: "none",
-                    boxShadow: "var(--shadow-lg)",
-                    zIndex: 60,
-                  }}
-                >
-                  {ROLE_OPTIONS.map((option) => {
-                    const active =
-                      option === role;
-
-                    return (
-                      <li
-                        key={option}
-                        role="option"
-                        aria-selected={active}
-                      >
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setRole(option);
-                            setOpen(false);
-                          }}
-                          style={{
-                            width: "100%",
-                            height: 36,
-                            padding: "0 10px",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent:
-                              "space-between",
-                            gap: 8,
-                            borderRadius:
-                              "var(--radius-sm)",
-                            border: "none",
-                            background: active
-                              ? "var(--primary-light)"
-                              : "transparent",
-                            color: active
-                              ? "var(--primary)"
-                              : "var(--text-secondary)",
-                            fontSize: 13,
-                            fontWeight: active
-                              ? 600
-                              : 500,
-                            lineHeight: 1,
-                            cursor: "pointer",
-                            textAlign: "left",
-                          }}
-                          onMouseEnter={(e) => {
-                            if (!active) {
-                              e.currentTarget.style.background =
-                                "var(--background-secondary)";
-                            }
-                          }}
-                          onMouseLeave={(e) => {
-                            if (!active) {
-                              e.currentTarget.style.background =
-                                "transparent";
-                            }
-                          }}
-                        >
-                          <span>{option}</span>
-
-                          {active && (
-                            <Check
-                              size={13}
-                              strokeWidth={2.5}
-                              color="var(--primary)"
-                            />
-                          )}
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </div>
-
-           
-
             <Link
               href="/reports/new"
               className="btn-primary"
               style={{
-                width: 100,
+                minWidth: 100,
                 fontSize: 13,
                 textDecoration: "none",
               }}
@@ -536,193 +342,349 @@ export default function Navbar() {
               + Report
             </Link>
 
-           
+            {/* Authenticated profile dropdown */}
             <div
               ref={profileRef}
               style={{
                 position: "relative",
               }}
             >
-              
-
               {user ? (
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  style={{
-                    height: 38,
-                    padding: "0 14px",
-                    borderRadius:
-                      "var(--radius-sm)",
-                    border:
-                      "1px solid var(--border)",
-                    background: "var(--card)",
-                    color: "var(--text-primary)",
-                    cursor: "pointer",
-                    fontSize: 13,
-                    fontWeight: 600,
-                  }}
-                >
-                  Logout
-                </button>
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setProfileOpen((value) => !value)}
+                    aria-label="Open profile menu"
+                    aria-haspopup="menu"
+                    aria-expanded={profileOpen}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                      minWidth: 0,
+                      maxWidth: 260,
+                      padding: "5px 8px 5px 5px",
+                      border: profileOpen
+                        ? "1px solid var(--primary)"
+                        : "1px solid transparent",
+                      borderRadius: "var(--radius-md)",
+                      background: profileOpen
+                        ? "var(--primary-light)"
+                        : "transparent",
+                      color: "var(--text-primary)",
+                      cursor: "pointer",
+                      textAlign: "left",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: 38,
+                        height: 38,
+                        flexShrink: 0,
+                        borderRadius: "50%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        background: "var(--primary-light)",
+                        border: "1px solid var(--border)",
+                        color: "var(--primary)",
+                        fontSize: 13,
+                        fontWeight: 700,
+                      }}
+                    >
+                      {getInitials(user.name)}
+                    </div>
+
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 4,
+                        minWidth: 0,
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontSize: 13,
+                          fontWeight: 700,
+                          lineHeight: 1.2,
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {user.name}
+                      </span>
+
+                      <span
+                        style={{
+                          fontSize: 11,
+                          color: "var(--text-muted)",
+                          lineHeight: 1.2,
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {user.email}
+                      </span>
+                    </div>
+
+                    <ChevronDown
+                      size={15}
+                      color="var(--text-muted)"
+                      style={{
+                        flexShrink: 0,
+                        transform: profileOpen
+                          ? "rotate(180deg)"
+                          : "rotate(0deg)",
+                        transition: "transform 0.15s",
+                      }}
+                    />
+                  </button>
+
+                  {profileOpen && (
+                    <div
+                      role="menu"
+                      style={{
+                        position: "absolute",
+                        top: "calc(100% + 10px)",
+                        right: 0,
+                        width: 280,
+                        padding: 8,
+                        background: "var(--card)",
+                        border: "1px solid var(--border)",
+                        borderRadius: "var(--radius-lg)",
+                        boxShadow: "var(--shadow-lg)",
+                        zIndex: 100,
+                      }}
+                    >
+                      {/* Profile identity */}
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 12,
+                          padding: "12px 10px 14px",
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: 44,
+                            height: 44,
+                            flexShrink: 0,
+                            borderRadius: "50%",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            background: "var(--primary-light)",
+                            color: "var(--primary)",
+                            fontSize: 14,
+                            fontWeight: 700,
+                          }}
+                        >
+                          {getInitials(user.name)}
+                        </div>
+
+                        <div style={{ minWidth: 0 }}>
+                          <div
+                            style={{
+                              fontSize: 13,
+                              fontWeight: 700,
+                              color: "var(--text-primary)",
+                              overflowWrap: "anywhere",
+                            }}
+                          >
+                            {user.name}
+                          </div>
+
+                          <div
+                            style={{
+                              marginTop: 4,
+                              fontSize: 11,
+                              color: "var(--text-muted)",
+                              overflowWrap: "anywhere",
+                            }}
+                          >
+                            {user.email}
+                          </div>
+
+                          <div
+                            style={{
+                              marginTop: 5,
+                              fontSize: 11,
+                              color: "var(--primary)",
+                              fontWeight: 600,
+                            }}
+                          >
+                            {getRoleName(user.role)}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div
+                        style={{
+                          height: 1,
+                          background: "var(--border)",
+                          margin: "0 4px 6px",
+                        }}
+                      />
+
+                      <Link
+                        href="/profile"
+                        role="menuitem"
+                        style={menuLinkStyle}
+                        onClick={() => setProfileOpen(false)}
+                        onMouseEnter={(event) => {
+                          event.currentTarget.style.background =
+                            "var(--primary-light)";
+                        }}
+                        onMouseLeave={(event) => {
+                          event.currentTarget.style.background =
+                            "transparent";
+                        }}
+                      >
+                        <UserRound
+                          size={18}
+                          color="var(--text-muted)"
+                        />
+                        <span>My Profile</span>
+                      </Link>
+
+                      <Link
+                        href="/profile/location"
+                        role="menuitem"
+                        style={menuLinkStyle}
+                        onClick={() => setProfileOpen(false)}
+                        onMouseEnter={(event) => {
+                          event.currentTarget.style.background =
+                            "var(--primary-light)";
+                        }}
+                        onMouseLeave={(event) => {
+                          event.currentTarget.style.background =
+                            "transparent";
+                        }}
+                      >
+                        <MapPin
+                          size={18}
+                          color="var(--text-muted)"
+                        />
+                        <span>My Location</span>
+                      </Link>
+
+                      <Link
+                        href="/profile/security"
+                        role="menuitem"
+                        style={menuLinkStyle}
+                        onClick={() => setProfileOpen(false)}
+                        onMouseEnter={(event) => {
+                          event.currentTarget.style.background =
+                            "var(--primary-light)";
+                        }}
+                        onMouseLeave={(event) => {
+                          event.currentTarget.style.background =
+                            "transparent";
+                        }}
+                      >
+                        <ShieldCheck
+                          size={18}
+                          color="var(--text-muted)"
+                        />
+                        <span>Security</span>
+                      </Link>
+
+                      <div
+                        style={{
+                          height: 1,
+                          background: "var(--border)",
+                          margin: "6px 4px",
+                        }}
+                      />
+
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={handleLogout}
+                        style={{
+                          ...menuLinkStyle,
+                          border: "none",
+                          background: "transparent",
+                          cursor: "pointer",
+                          color: "#b42318",
+                          textAlign: "left",
+                        }}
+                        onMouseEnter={(event) => {
+                          event.currentTarget.style.background =
+                            "#fef3f2";
+                        }}
+                        onMouseLeave={(event) => {
+                          event.currentTarget.style.background =
+                            "transparent";
+                        }}
+                      >
+                        <LogOut size={18} />
+                        <span>Logout</span>
+                      </button>
+                    </div>
+                  )}
+                </>
               ) : (
-                
                 <button
                   type="button"
-                  aria-label="Account menu"
+                  aria-label="Open account menu"
                   aria-haspopup="menu"
                   aria-expanded={profileOpen}
-                  onClick={() => {
-                    setProfileOpen((v) => !v);
-                    setOpen(false);
-                  }}
+                  onClick={() => setProfileOpen((value) => !value)}
                   style={{
-                    width: 38,
-                    height: 38,
-                    flexShrink: 0,
-                    borderRadius: "9999px",
+                    width: 40,
+                    height: 40,
+                    borderRadius: "50%",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    background:
-                      "var(--primary-light)",
-                    border:
-                      "1px solid var(--border)",
+                    background: "var(--primary-light)",
+                    border: "1px solid var(--border)",
                     color: "var(--primary)",
                     cursor: "pointer",
-                    transition:
-                      "background-color 0.15s, border-color 0.15s",
                   }}
                 >
-                  <UserRound
-                    size={17}
-                    strokeWidth={2}
-                  />
+                  <UserRound size={18} />
                 </button>
               )}
 
-             
-
-              {profileOpen && !user && (
+              {!user && profileOpen && (
                 <div
                   role="menu"
                   style={{
                     position: "absolute",
                     top: "calc(100% + 8px)",
                     right: 0,
-                    width: 300,
-                    background: "var(--card)",
-                    border:
-                      "1px solid var(--border)",
-                    borderRadius: 18,
+                    width: 220,
                     padding: 8,
-                    boxShadow:
-                      "0 18px 45px rgba(0, 0, 0, 0.12)",
+                    background: "var(--card)",
+                    border: "1px solid var(--border)",
+                    borderRadius: "var(--radius-lg)",
+                    boxShadow: "var(--shadow-lg)",
                     zIndex: 100,
                   }}
                 >
-                  {/* SIGN IN */}
-
                   <Link
                     href="/auth/login"
                     role="menuitem"
-                    onClick={() =>
-                      setProfileOpen(false)
-                    }
-                    style={{
-                      width: "100%",
-                      height: 52,
-                      padding: "0 14px",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 13,
-                      borderRadius: 12,
-                      color:
-                        "var(--text-primary)",
-                      fontSize: 14,
-                      fontWeight: 500,
-                      textDecoration: "none",
-                      transition:
-                        "background-color 0.15s, color 0.15s",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background =
-                        "var(--primary-light)";
-
-                      e.currentTarget.style.color =
-                        "var(--primary)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background =
-                        "transparent";
-
-                      e.currentTarget.style.color =
-                        "var(--text-primary)";
-                    }}
+                    style={menuLinkStyle}
+                    onClick={() => setProfileOpen(false)}
                   >
-                    <LogIn
-                      size={19}
-                      strokeWidth={1.8}
-                      color="var(--text-muted)"
-                    />
-
+                    <LogIn size={18} color="var(--text-muted)" />
                     <span>Sign In</span>
                   </Link>
-
-                  <div
-                    style={{
-                      height: 1,
-                      background:
-                        "var(--border)",
-                      margin: "4px 8px",
-                    }}
-                  />
-
-                  {/* SIGN UP */}
 
                   <Link
                     href="/auth/register"
                     role="menuitem"
-                    onClick={() =>
-                      setProfileOpen(false)
-                    }
-                    style={{
-                      width: "100%",
-                      height: 52,
-                      padding: "0 14px",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 13,
-                      borderRadius: 12,
-                      color:
-                        "var(--text-primary)",
-                      fontSize: 14,
-                      fontWeight: 500,
-                      textDecoration: "none",
-                      transition:
-                        "background-color 0.15s, color 0.15s",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background =
-                        "var(--primary-light)";
-
-                      e.currentTarget.style.color =
-                        "var(--primary)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background =
-                        "transparent";
-
-                      e.currentTarget.style.color =
-                        "var(--text-primary)";
-                    }}
+                    style={menuLinkStyle}
+                    onClick={() => setProfileOpen(false)}
                   >
-                    <UserPlus
-                      size={19}
-                      strokeWidth={1.8}
-                      color="var(--text-muted)"
-                    />
-
+                    <UserPlus size={18} color="var(--text-muted)" />
                     <span>Sign Up</span>
                   </Link>
                 </div>

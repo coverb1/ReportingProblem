@@ -1,6 +1,4 @@
-
 "use client";
-
 import { Camera, Droplets, Lightbulb, MapPin, Recycle, Road, Send, Trash2, Waves, } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
