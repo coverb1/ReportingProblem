@@ -427,7 +427,7 @@ export default function Navbar() {
                       />
 
                       <Link
-                        href="/profile"
+                        href="/Myprofile"
                         role="menuitem"
                         onClick={() => setProfileOpen(false)}
                         style={{

@@ -2,16 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import {
-  UserRound,
-  Mail,
-  Lock,
-  Eye,
-  EyeOff,
-  MapPin,
-  ChevronDown,
-  ArrowRight,
-} from "lucide-react";
+import { UserRound,Mail,Lock,Eye,EyeOff,MapPin,ChevronDown,ArrowRight,} from "lucide-react";
 import axios from "axios";
 import { toast } from "react-toastify";
 
@@ -35,7 +26,7 @@ export default function SignUpPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [passWord, setPassWord] = useState("");
-  const [phoneNumber, setphoneNumber] = useState("");
+  const [phone, setphoneNumber] = useState("");
 
   useEffect(() => {
     const getDistrict = async () => {
@@ -142,7 +133,7 @@ export default function SignUpPage() {
           email,
           password: passWord,
           villageId,
-          phoneNumber,
+          phone,
         }
       );
 
@@ -164,15 +155,14 @@ export default function SignUpPage() {
       setSectors([]);
       setCells([]);
       setVillage([]);
-    } catch (error:any) {
-      if (error.response?.status===409)
-         {
+    } catch (error: any) {
+      if (error.response?.status === 409) {
         toast.error("User already exists!");
       }
-      else{
+      else {
         toast.error(
-      error.response?.data?.message || "Registration failed!"
-    );
+          error.response?.data?.message || "Registration failed!"
+        );
       }
     }
   };
@@ -331,9 +321,9 @@ export default function SignUpPage() {
                       id="phoneNumber"
                       name="phoneNumber"
                       type="tel"
-                      value={phoneNumber}
+                      value={phone}
                       onChange={(e) =>
-                        setphoneNumber(e.target.value.replace(/\D/g, "").slice(0, 10))
+                        setphoneNumber(e.target.value.replace(/\D/g,"").slice(0,10))
                       }
                       placeholder="0781234567"
                       inputMode="numeric"
