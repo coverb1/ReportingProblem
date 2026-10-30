@@ -9,9 +9,7 @@ import {
   LogIn,
   UserPlus,
   MapPin,
-  ShieldCheck,
-  LogOut,
-} from "lucide-react";
+  ShieldCheck,LogOut,} from "lucide-react";
 import { usePathname } from "next/navigation";
 import axios from "axios";
 
