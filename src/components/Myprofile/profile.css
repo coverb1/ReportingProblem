@@ -1,3 +1,25 @@
+/* ============================================
+   FIX: stop the "moving up" hover effect on this page
+   (it comes from global .card:hover / button:hover rules)
+   ============================================ */
+.profile-page .card,
+.profile-page .card:hover,
+.profile-page .card:focus-within,
+.profile-page .btn-primary,
+.profile-page .btn-primary:hover,
+.profile-page .btn-primary:active,
+.profile-page .btn-secondary,
+.profile-page .btn-secondary:hover,
+.profile-page .btn-secondary:active,
+.profile-page .profile-tab,
+.profile-page .profile-tab:hover,
+.profile-page .profile-edit-button,
+.profile-page .profile-edit-button:hover,
+.profile-page .profile-danger-button,
+.profile-page .profile-danger-button:hover {
+  transform: none !important;
+}
+
 .profile-page {
   min-height: calc(100vh - 72px);
   padding: 36px 0 56px;
@@ -151,6 +173,7 @@
   color: var(--primary);
   font-size: 24px;
   font-weight: 700;
+  cursor: pointer;
 }
 
 .profile-avatar img {
@@ -173,6 +196,7 @@
   border-radius: 50%;
   background: var(--card);
   color: var(--text-secondary);
+  cursor: pointer;
 }
 
 .profile-overview-details {
@@ -421,6 +445,8 @@
   line-height: 1.8;
 }
 
+/* ---------- Modals ---------- */
+
 .profile-modal-overlay {
   position: fixed;
   inset: 0;
@@ -470,11 +496,57 @@
   font-family: inherit;
   font-size: 14px;
   font-weight: 600;
+  cursor: pointer;
 }
 
 .profile-danger-button:hover {
   opacity: 0.9;
 }
+
+/* ---------- Change profile photo modal (was missing) ---------- */
+
+.profile-photo-modal {
+  width: 100%;
+  max-width: 380px;
+  padding: 24px;
+  display: grid;
+  gap: 12px;
+}
+
+.profile-photo-modal h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.profile-photo-modal p {
+  margin: 0 0 4px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.profile-photo-modal button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--card);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.profile-photo-modal button:hover {
+  background: var(--primary-light);
+  color: var(--primary);
+}
+
+/* ---------- Responsive ---------- */
 
 @media (max-width: 760px) {
   .profile-settings {

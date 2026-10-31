@@ -212,6 +212,7 @@ export default function ProfilePage() {
                       role="button"
                       tabIndex={0}
                       onKeyDown={(e) => {
+                        // if some one clicks enter or space opens up pop up
                         if (e.key === "Enter" || e.key === " ") {
                           setPopUpImage(true);
                         }
