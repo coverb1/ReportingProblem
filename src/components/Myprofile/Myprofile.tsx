@@ -41,9 +41,7 @@ export default function ProfilePage() {
     { id: "security" as const, label: "Security", icon: ShieldCheck },
   ];
 
-  const locationText = [village, cell, sector, district]
-    .filter(Boolean)
-    .join(", ") || "Location not provided";
+  const locationText = [village, cell, sector, district].filter(Boolean).join(", ") || "Location not provided";
 
   const renderValue = (
     label: string,
@@ -97,10 +95,9 @@ export default function ProfilePage() {
   }, []);
 
   // Select profile image
-  const handleImageChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = e.target.files?.[0];
+  const handleImageChange =async ( e: React.ChangeEvent<HTMLInputElement>) => {
+   try {
+     const file = e.target.files?.[0];
 
     if (file) {
       // Check whether the selected file is an image
@@ -117,10 +114,22 @@ export default function ProfilePage() {
 
       // Close popup
       setPopUpImage(false);
+
+// prepareImageForBackend
+const formdata=new FormData ()
+formdata.append("file",file)
+
+// upload image  to backend
+const response=await axios.post("http://localhost:3000/upload/profile",formdata)
+console.log(response.data)
     }
 
     // Allow selecting the same image again
     e.target.value = "";
+   } catch (error) {
+    toast.error("Image upload failed");
+    console.log(error)
+   }
   };
 
   // Remove profile image

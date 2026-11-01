@@ -1,7 +1,3 @@
-/* ============================================
-   FIX: stop the "moving up" hover effect on this page
-   (it comes from global .card:hover / button:hover rules)
-   ============================================ */
 .profile-page .card,
 .profile-page .card:hover,
 .profile-page .card:focus-within,
