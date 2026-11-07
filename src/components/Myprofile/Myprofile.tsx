@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { UserRound, ShieldCheck, MapPin, Pencil, Camera, ChevronRight, LockKeyhole, Trash2, Mail, Phone, MapPinned, X, Check, } from "lucide-react";
 import "./profile.css";
@@ -17,6 +17,12 @@ export default function ProfilePage() {
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 
+  // This stores the new information entered by the user.
+  const [formData, setFormData] = useState({
+    name: "",
+    email: ""
+  })
+
   // Profile photo states
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [profileImage, setProfileImage] = useState<string | null>(null);
@@ -31,7 +37,7 @@ export default function ProfilePage() {
   const [cell, setCell] = useState("");
   const [village, setVillage] = useState("");
 
-  const fullName = name.trim();
+const fullName = (name || "").trim();
 
   const initials = fullName.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join("") || "U";
 
@@ -43,11 +49,11 @@ export default function ProfilePage() {
 
   const locationText = [village, cell, sector, district].filter(Boolean).join(", ") || "Location not provided";
 
-  const renderValue = (
-    label: string,
-    value: string,
-    icon?: React.ReactNode
-  ) => (
+  // is a function that creates and displays one profile information field on the screen.
+// It allows you to pass different things that React can display,
+// React.ReactNode allows your renderValue function to receive anything React can display, 
+// including your Mail and Phone icons.
+  const renderValue = (label: string,value: string,icon?: React.ReactNode) => (
     <div className="profile-value" key={label}>
       <span className="profile-field-label">{label}</span>
       <span className="profile-field-value">
@@ -57,6 +63,29 @@ export default function ProfilePage() {
     </div>
   );
 
+  // updatePersonal imforamtion
+
+  const handleUpdateProfileImage = async (event: React.FormEvent) => {
+    event.preventDefault()
+    try {
+      const token = localStorage.getItem("token")
+      if (!token) {
+        console.log("please you are anuthorised User")
+        return
+      }
+      const response = await axios.patch("http://localhost:3000/auth/profileUpdate", formData, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+      setName(response.data.user.name||"")
+      setEmail(response.data.user.email||"")
+      console.log("update userPersonaldata went well")
+      setEditingPersonal(false)
+    } catch (error) {
+      console.log(error)
+    }
+  }
   // Get user information from backend
   useEffect(() => {
     async function getMyProfile() {
@@ -84,7 +113,7 @@ export default function ProfilePage() {
         setSector(response.data.sector || "");
         setCell(response.data.cell || "");
         setVillage(response.data.village || "");
-
+        setProfileImage(response.data.profileImage || "")
         console.log(response.data);
       } catch (error) {
         console.log(error);
@@ -95,41 +124,47 @@ export default function ProfilePage() {
   }, []);
 
   // Select profile image
-  const handleImageChange =async ( e: React.ChangeEvent<HTMLInputElement>) => {
-   try {
-     const file = e.target.files?.[0];
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      const file = e.target.files?.[0];
 
-    if (file) {
-      // Check whether the selected file is an image
-      if (!file.type.startsWith("image/")) {
-        toast.error("Please select an image");
-        e.target.value = "";
-        return;
+      if (file) {
+        // Check whether the selected file is an image
+        if (!file.type.startsWith("image/")) {
+          toast.error("Please select an image");
+          e.target.value = "";
+          return;
+        }
+        // Create temporary image URL
+
+
+        // Close popup
+        setPopUpImage(false);
+
+        // prepareImageForBackend
+        const formdata = new FormData()
+        formdata.append("file", file)
+
+        // upload image  to backend
+        const token = localStorage.getItem("token")
+        const response = await axios.post("http://localhost:3000/upload/profile",
+          formdata,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }
+        )
+        console.log(response.data)
+        setProfileImage(response.data.imageURL);
       }
 
-      // Create temporary image URL
-      const imageURL = URL.createObjectURL(file);
-
-      setProfileImage(imageURL);
-
-      // Close popup
-      setPopUpImage(false);
-
-// prepareImageForBackend
-const formdata=new FormData ()
-formdata.append("file",file)
-
-// upload image  to backend
-const response=await axios.post("http://localhost:3000/upload/profile",formdata)
-console.log(response.data)
+      // Allow selecting the same image again
+      e.target.value = "";
+    } catch (error) {
+      toast.error("Image upload failed");
+      console.log(error)
     }
-
-    // Allow selecting the same image again
-    e.target.value = "";
-   } catch (error) {
-    toast.error("Image upload failed");
-    console.log(error)
-   }
   };
 
   // Remove profile image
@@ -276,13 +311,17 @@ console.log(response.data)
                 <div className="card profile-section-card">
                   <div className="profile-card-heading">
                     <h3>Personal Information</h3>
-
+                    {/* start editing button */}
                     <button
                       type="button"
                       className="profile-edit-button"
-                      onClick={() =>
-                        setEditingPersonal(!editingPersonal)
-                      }
+                      onClick={() => {
+                        setFormData({
+                          name: name,
+                          email: email
+                        })
+                        setEditingPersonal(true);
+                      }}
                     >
                       {editingPersonal ? (
                         <X size={14} />
@@ -295,13 +334,7 @@ console.log(response.data)
                   </div>
 
                   {editingPersonal ? (
-                    <form
-                      className="profile-form-grid"
-                      onSubmit={(event) => {
-                        event.preventDefault();
-                        setEditingPersonal(false);
-                      }}
-                    >
+                    <form className="profile-form-grid" onSubmit={handleUpdateProfileImage}>
                       <div className="profile-form-field">
                         <label htmlFor="profile-first-name">
                           First name
@@ -309,9 +342,12 @@ console.log(response.data)
 
                         <input
                           id="profile-first-name"
-                          value={name}
+                          value={formData.name}
                           onChange={(event) =>
-                            setName(event.target.value)
+                            setFormData({
+                              ...formData,
+                              name: event.target.value
+                            })
                           }
                           placeholder="First name"
                         />
@@ -325,9 +361,12 @@ console.log(response.data)
                         <input
                           id="profile-email"
                           type="email"
-                          value={email}
+                          value={formData.email}
                           onChange={(event) =>
-                            setEmail(event.target.value)
+                            setFormData({
+                              ...formData,
+                              email: event.target.value
+                            })
                           }
                           placeholder="Email address"
                         />
@@ -350,10 +389,17 @@ console.log(response.data)
                       </div>
 
                       <div className="profile-form-actions profile-form-full-width">
+                        {/* cancel button */}
                         <button
                           type="button"
                           className="btn-secondary"
-                          onClick={() => setEditingPersonal(false)}
+                          onClick={() => {
+                            setFormData({
+                              name: name,
+                              email: email
+                            })
+                            setEditingPersonal(false)
+                          }}
                         >
                           Cancel
                         </button>
