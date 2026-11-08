@@ -20,7 +20,8 @@ export default function ProfilePage() {
   // This stores the new information entered by the user.
   const [formData, setFormData] = useState({
     name: "",
-    email: ""
+    email: "",
+    phone:""
   })
 
   // Profile photo states
@@ -80,6 +81,7 @@ const fullName = (name || "").trim();
       })
       setName(response.data.user.name||"")
       setEmail(response.data.user.email||"")
+      setPhone(response.data.user.phone||"")
       console.log("update userPersonaldata went well")
       setEditingPersonal(false)
     } catch (error) {
@@ -318,7 +320,8 @@ const fullName = (name || "").trim();
                       onClick={() => {
                         setFormData({
                           name: name,
-                          email: email
+                          email: email,
+                          phone:phone
                         })
                         setEditingPersonal(true);
                       }}
@@ -380,9 +383,11 @@ const fullName = (name || "").trim();
                         <input
                           id="profile-phone"
                           type="tel"
-                          value={phone}
+                          value={formData.phone}
                           onChange={(event) =>
-                            setPhone(event.target.value)
+                            setFormData({...formData,
+                              phone:event.target.value
+                            })
                           }
                           placeholder="Phone number"
                         />
@@ -396,7 +401,8 @@ const fullName = (name || "").trim();
                           onClick={() => {
                             setFormData({
                               name: name,
-                              email: email
+                              email: email,
+                              phone:phone
                             })
                             setEditingPersonal(false)
                           }}
