@@ -3,12 +3,31 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { UserRound, ShieldCheck, MapPin, Pencil, Camera, ChevronRight, LockKeyhole, Trash2, Mail, Phone, MapPinned, X, Check, } from "lucide-react";
+import {
+  UserRound,
+  ShieldCheck,
+  MapPin,
+  Pencil,
+  Camera,
+  ChevronRight,
+  LockKeyhole,
+  Trash2,
+  Mail,
+  Phone,
+  MapPinned,
+  X,
+  Check,
+} from "lucide-react";
 import "./profile.css";
 import { toast } from "react-toastify";
 import axios from "axios";
 
 type ProfileTab = "profile" | "location" | "security";
+
+type UserProfile = {
+  profileUpdateCount: number;
+  profileLockedInUntill: string | null;
+};
 
 export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<ProfileTab>("profile");
@@ -17,12 +36,20 @@ export default function ProfilePage() {
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 
-  // This stores the new information entered by the user.
+  // Stores profile update-limit information
+  const [user, setUser] = useState<UserProfile | null>(null);
+
+  // Stores the new information entered by the user
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    phone:""
-  })
+    phone: "",
+  });
+
+  // Check whether the user is locked from updating their profile
+  const isProfileLocked =
+    !!user?.profileLockedInUntill &&
+    new Date(user.profileLockedInUntill) > new Date();
 
   // Profile photo states
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -38,9 +65,15 @@ export default function ProfilePage() {
   const [cell, setCell] = useState("");
   const [village, setVillage] = useState("");
 
-const fullName = (name || "").trim();
+  const fullName = (name || "").trim();
 
-  const initials = fullName.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join("") || "U";
+  const initials =
+    fullName
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase())
+      .join("") || "U";
 
   const tabs = [
     { id: "profile" as const, label: "My Profile", icon: UserRound },
@@ -48,15 +81,19 @@ const fullName = (name || "").trim();
     { id: "security" as const, label: "Security", icon: ShieldCheck },
   ];
 
-  const locationText = [village, cell, sector, district].filter(Boolean).join(", ") || "Location not provided";
+  const locationText =
+    [village, cell, sector, district].filter(Boolean).join(", ") ||
+    "Location not provided";
 
-  // is a function that creates and displays one profile information field on the screen.
-// It allows you to pass different things that React can display,
-// React.ReactNode allows your renderValue function to receive anything React can display, 
-// including your Mail and Phone icons.
-  const renderValue = (label: string,value: string,icon?: React.ReactNode) => (
+  // Creates and displays one profile information field
+  const renderValue = (
+    label: string,
+    value: string,
+    icon?: React.ReactNode
+  ) => (
     <div className="profile-value" key={label}>
       <span className="profile-field-label">{label}</span>
+
       <span className="profile-field-value">
         {icon}
         {value || "Not provided"}
@@ -64,30 +101,62 @@ const fullName = (name || "").trim();
     </div>
   );
 
-  // updatePersonal imforamtion
-
+  // Update personal information
   const handleUpdateProfileImage = async (event: React.FormEvent) => {
-    event.preventDefault()
+    event.preventDefault();
+
     try {
-      const token = localStorage.getItem("token")
+      const token = localStorage.getItem("token");
+
       if (!token) {
-        console.log("please you are anuthorised User")
-        return
+        toast.error("You are not authorised. Please log in again.");
+        return;
       }
-      const response = await axios.patch("http://localhost:3000/auth/profileUpdate", formData, {
-        headers: {
-          Authorization: `Bearer ${token}`
+
+      const response = await axios.patch(
+        "http://localhost:3000/auth/profileUpdate",
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
-      })
-      setName(response.data.user.name||"")
-      setEmail(response.data.user.email||"")
-      setPhone(response.data.user.phone||"")
-      console.log("update userPersonaldata went well")
-      setEditingPersonal(false)
+      );
+
+      const updatedUser = response.data.user;
+
+      // Update the displayed personal information
+      setName(updatedUser.name || "");
+      setEmail(updatedUser.email || "");
+      setPhone(updatedUser.phone || "");
+
+      // Update the profile update-limit information
+      setUser({
+        profileUpdateCount:
+          updatedUser.profileUpdateCount ?? user?.profileUpdateCount ?? 0,
+
+        profileLockedInUntill:
+          updatedUser.profileLockedInUntill ??
+          user?.profileLockedInUntill ??
+          null,
+      });
+
+      toast.success("Profile updated successfully!");
+
+      setEditingPersonal(false);
     } catch (error) {
-      console.log(error)
+      console.log(error);
+
+      if (axios.isAxiosError(error)) {
+        toast.error(
+          error.response?.data?.message || "Profile update failed."
+        );
+      } else {
+        toast.error("Something went wrong.");
+      }
     }
-  }
+  };
+
   // Get user information from backend
   useEffect(() => {
     async function getMyProfile() {
@@ -95,7 +164,7 @@ const fullName = (name || "").trim();
         const token = localStorage.getItem("token");
 
         if (!token) {
-          toast.error("Your information not found");
+          toast.error("Your information was not found.");
           return;
         }
 
@@ -111,70 +180,85 @@ const fullName = (name || "").trim();
         setName(response.data.name || "");
         setEmail(response.data.email || "");
         setPhone(response.data.phone || "");
+
         setDistrict(response.data.district || "");
         setSector(response.data.sector || "");
         setCell(response.data.cell || "");
         setVillage(response.data.village || "");
-        setProfileImage(response.data.profileImage || "")
+
+        // Get profile update-limit information
+        setUser({
+          profileUpdateCount: response.data.profileUpdateCount ?? 0,
+          profileLockedInUntill:
+            response.data.profileLockedInUntill ?? null,
+        });
+
+        setProfileImage(response.data.profileImage || "");
+
         console.log(response.data);
       } catch (error) {
         console.log(error);
+        toast.error("Could not load your profile.");
       }
     }
 
     getMyProfile();
   }, []);
 
-  // Select profile image
-  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Select and upload profile image
+  const handleImageChange = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     try {
       const file = e.target.files?.[0];
 
       if (file) {
         // Check whether the selected file is an image
         if (!file.type.startsWith("image/")) {
-          toast.error("Please select an image");
+          toast.error("Please select an image.");
           e.target.value = "";
           return;
         }
-        // Create temporary image URL
 
+        // Prepare image for backend
+        const formdata = new FormData();
+        formdata.append("file", file);
 
-        // Close popup
-        setPopUpImage(false);
+        // Upload image to backend
+        const token = localStorage.getItem("token");
 
-        // prepareImageForBackend
-        const formdata = new FormData()
-        formdata.append("file", file)
+        if (!token) {
+          toast.error("Please log in again.");
+          return;
+        }
 
-        // upload image  to backend
-        const token = localStorage.getItem("token")
-        const response = await axios.post("http://localhost:3000/upload/profile",
+        const response = await axios.post(
+          "http://localhost:3000/upload/profile",
           formdata,
           {
             headers: {
-              Authorization: `Bearer ${token}`
-            }
+              Authorization: `Bearer ${token}`,
+            },
           }
-        )
-        console.log(response.data)
+        );
+
+        console.log(response.data);
+
         setProfileImage(response.data.imageURL);
+        setPopUpImage(false);
+        toast.success("Profile image updated successfully.");
       }
 
       // Allow selecting the same image again
       e.target.value = "";
     } catch (error) {
-      toast.error("Image upload failed");
-      console.log(error)
+      toast.error("Image upload failed.");
+      console.log(error);
     }
   };
 
-  // Remove profile image
+  // Remove profile image from the frontend
   const handleRemoveImage = () => {
-    if (profileImage) {
-      URL.revokeObjectURL(profileImage);
-    }
-
     setProfileImage(null);
     setPopUpImage(false);
   };
@@ -184,6 +268,7 @@ const fullName = (name || "").trim();
       <div className="container profile-container">
         <header className="profile-page-header">
           <h1>Account Settings</h1>
+
           <p>
             Manage your personal information and account preferences.
           </p>
@@ -201,8 +286,9 @@ const fullName = (name || "").trim();
                   <button
                     key={tab.id}
                     type="button"
-                    className={`profile-tab${activeTab === tab.id ? " active" : ""
-                      }`}
+                    className={`profile-tab${
+                      activeTab === tab.id ? " active" : ""
+                    }`}
                     onClick={() => setActiveTab(tab.id)}
                     aria-current={
                       activeTab === tab.id ? "page" : undefined
@@ -242,6 +328,7 @@ const fullName = (name || "").trim();
           </aside>
 
           <section className="profile-content">
+            {/* Profile tab */}
             {activeTab === "profile" && (
               <>
                 <h2 className="profile-section-title">My Profile</h2>
@@ -249,7 +336,6 @@ const fullName = (name || "").trim();
                 {/* Profile overview and photo */}
                 <div className="card profile-overview">
                   <div className="profile-avatar-wrap">
-
                     {/* Profile picture */}
                     <div
                       className="profile-avatar"
@@ -258,17 +344,13 @@ const fullName = (name || "").trim();
                       role="button"
                       tabIndex={0}
                       onKeyDown={(e) => {
-                        // if some one clicks enter or space opens up pop up
                         if (e.key === "Enter" || e.key === " ") {
                           setPopUpImage(true);
                         }
                       }}
                     >
                       {profileImage ? (
-                        <img
-                          src={profileImage}
-                          alt="Profile"
-                        />
+                        <img src={profileImage} alt="Profile" />
                       ) : (
                         initials
                       )}
@@ -313,17 +395,20 @@ const fullName = (name || "").trim();
                 <div className="card profile-section-card">
                   <div className="profile-card-heading">
                     <h3>Personal Information</h3>
-                    {/* start editing button */}
+
+                    {/* Edit button */}
                     <button
                       type="button"
                       className="profile-edit-button"
+                      disabled={isProfileLocked}
                       onClick={() => {
-                        setFormData({
-                          name: name,
-                          email: email,
-                          phone:phone
-                        })
-                        setEditingPersonal(true);
+                        if (editingPersonal) {
+                          setFormData({ name, email, phone });
+                          setEditingPersonal(false);
+                        } else {
+                          setFormData({ name, email, phone });
+                          setEditingPersonal(true);
+                        }
                       }}
                     >
                       {editingPersonal ? (
@@ -336,8 +421,19 @@ const fullName = (name || "").trim();
                     </button>
                   </div>
 
+                  {/* Show warning outside the button */}
+                  {isProfileLocked && (
+                    <p>
+                      You have reached your update limit. Try again after
+                      48 hours.
+                    </p>
+                  )}
+
                   {editingPersonal ? (
-                    <form className="profile-form-grid" onSubmit={handleUpdateProfileImage}>
+                    <form
+                      className="profile-form-grid"
+                      onSubmit={handleUpdateProfileImage}
+                    >
                       <div className="profile-form-field">
                         <label htmlFor="profile-first-name">
                           First name
@@ -349,7 +445,7 @@ const fullName = (name || "").trim();
                           onChange={(event) =>
                             setFormData({
                               ...formData,
-                              name: event.target.value
+                              name: event.target.value,
                             })
                           }
                           placeholder="First name"
@@ -368,7 +464,7 @@ const fullName = (name || "").trim();
                           onChange={(event) =>
                             setFormData({
                               ...formData,
-                              email: event.target.value
+                              email: event.target.value,
                             })
                           }
                           placeholder="Email address"
@@ -385,8 +481,9 @@ const fullName = (name || "").trim();
                           type="tel"
                           value={formData.phone}
                           onChange={(event) =>
-                            setFormData({...formData,
-                              phone:event.target.value
+                            setFormData({
+                              ...formData,
+                              phone: event.target.value,
                             })
                           }
                           placeholder="Phone number"
@@ -394,17 +491,13 @@ const fullName = (name || "").trim();
                       </div>
 
                       <div className="profile-form-actions profile-form-full-width">
-                        {/* cancel button */}
+                        {/* Cancel button */}
                         <button
                           type="button"
                           className="btn-secondary"
                           onClick={() => {
-                            setFormData({
-                              name: name,
-                              email: email,
-                              phone:phone
-                            })
-                            setEditingPersonal(false)
+                            setFormData({ name, email, phone });
+                            setEditingPersonal(false);
                           }}
                         >
                           Cancel
@@ -422,11 +515,13 @@ const fullName = (name || "").trim();
                   ) : (
                     <div className="profile-information-grid">
                       {renderValue("First name", name)}
+
                       {renderValue(
                         "Email address",
                         email,
                         <Mail size={15} />
                       )}
+
                       {renderValue(
                         "Phone number",
                         phone,
@@ -604,9 +699,7 @@ const fullName = (name || "").trim();
                         <ShieldCheck size={20} />
 
                         <div>
-                          <h4>
-                            Need to move to another location?
-                          </h4>
+                          <h4>Need to move to another location?</h4>
 
                           <p>
                             Request a change to your registered
@@ -636,9 +729,7 @@ const fullName = (name || "").trim();
             {/* Security tab */}
             {activeTab === "security" && (
               <>
-                <h2 className="profile-section-title">
-                  Security
-                </h2>
+                <h2 className="profile-section-title">Security</h2>
 
                 <p className="profile-section-description">
                   Manage your password and protect your account.
@@ -775,7 +866,9 @@ const fullName = (name || "").trim();
               Change Profile Photo
             </h3>
 
-            <p>Choose what you want to do with your profile photo.</p>
+            <p>
+              Choose what you want to do with your profile photo.
+            </p>
 
             {/* Upload Image */}
             <button
